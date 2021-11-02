@@ -1311,3 +1311,112 @@ url = {https://doi.org/10.1107/S1600576714007626},
 abstract = {The emerging technique of serial X-ray diffraction, in which diffraction data are collected from samples flowing across a pulsed X-ray source at repetition rates of 100Hz or higher, has necessitated the development of new software in order to handle the large data volumes produced. Sorting of data according to different criteria and rapid filtering of events to retain only diffraction patterns of interest results in significant reductions in data volume, thereby simplifying subsequent data analysis and management tasks. Meanwhile the generation of reduced data in the form of virtual powder patterns, radial stacks, histograms and other meta data creates data set summaries for analysis and overall experiment evaluation. Rapid data reduction early in the analysis pipeline is proving to be an essential first step in serial imaging experiments, prompting the authors to make the tool described in this article available to the general community. Originally developed for experiments at X-ray free-electron lasers, the software is based on a modular facility-independent library to promote portability between different experiments and is available under version 3 or later of the GNU General Public License.},
 keywords = {free-electron lasers, serial crystallography, serial X-ray diffraction},
 }
+@article{pdj2013, 
+title={PyFAI: a Python library for high performance azimuthal integration on GPU}, 
+volume={28}, 
+DOI={10.1017/S0885715613000924}, 
+number={S2}, 
+journal={Powder Diffraction}, 
+publisher={Cambridge University Press}, 
+author={Kieffer, J. and Wright, J.P.}, 
+year={2013}, 
+pages={S339–S350}
+}
+@book{Sivia2006,
+  added-at = {2019-03-11T21:00:05.000+0100},
+  author = {Sivia, D. S. and Skilling, J.},
+  biburl = {https://www.bibsonomy.org/bibtex/272f2fe4eff9fbfb391f8d72f8dd93872/fairybasslet},
+  citeulike-article-id = {1731310},
+  edition = {2nd},
+  interhash = {967121cedc716b9bfd7a098f9b59590e},
+  intrahash = {72f2fe4eff9fbfb391f8d72f8dd93872},
+  keywords = {*file-import-13-09-19 bayesian},
+  posted-at = {2012-10-30 12:06:16},
+  priority = {2},
+  publisher = {Oxford University Press},
+  series = {Oxford Science Publications},
+  timestamp = {2019-03-11T21:06:37.000+0100},
+  title = {{Data Analysis - A Bayesian Tutorial}},
+  year = 2006
+}
+
+@Article{brocades,
+author ="Bordet, Pierre and Kergourlay, Florian and Pinto, Ariane and Blanc, Nils and Martinetto, Pauline",
+title  ="Applying multivariate analysis to X-ray diffraction computed tomography: the study of medieval applied brocades",
+journal  ="J. Anal. At. Spectrom.",
+year  ="2021",
+volume  ="36",
+issue  ="8",
+pages  ="1724-1734",
+publisher  ="The Royal Society of Chemistry",
+doi  ="10.1039/D1JA00143D",
+url  ="http://dx.doi.org/10.1039/D1JA00143D",
+abstract  ="X-ray diffraction tomography is a well-developed technique to study the structure of heterogeneous materials which makes it a tool of choice for the non-destructive investigation of cultural heritage microsamples. Characterizing such complex materials with a high enough spatial resolution requires acquiring large amounts of diffraction images{,} followed by a complex sequence of data management to localize the crystalline phases in the sample. Here we propose to use multivariate analysis in order to automatically decompose the data in a small set of components{,} each representing the diffraction pattern of one or a small number of phases. This makes phase identification and quantification of each component much more efficient and leads to a quantitative knowledge of the phase content in each voxel of the tomographic reconstruction. We show that non-negative matrix factorization is very efficient for this purpose{,} with a computing time well compatible with in-line data analysis in order to assess the quality of measurements during experiments at synchrotron beamlines. Here{,} we apply the method to the investigation of microsamples from medieval applied brocade decors selected from a wooden statue{,} and the results are validated a posteriori by comparison with ex situ destructive techniques."
+}
+
+@inproceedings{variance2018,
+author = {Schubert, Erich and Gertz, Michael},
+title = {Numerically Stable Parallel Computation of (Co-)Variance},
+year = {2018},
+isbn = {9781450365055},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3221269.3223036},
+doi = {10.1145/3221269.3223036},
+abstract = {With the advent of big data, we see an increasing interest in computing correlations
+in huge data sets with both many instances and many variables. Essential descriptive
+statistics such as the variance, standard deviation, covariance, and correlation can
+suffer from a numerical instability known as "catastrophic cancellation" that can
+lead to problems when naively computing these statistics with a popular textbook equation.
+While this instability has been discussed in the literature already 50 years ago,
+we found that even today, some high-profile tools still employ the instable version.In
+this paper, we study a popular incremental technique originally proposed by Welford,
+which we extend to weighted covariance and correlation. We also discuss strategies
+for further improving numerical precision, how to compute such statistics online on
+a data stream, with exponential aging, with missing data, and a batch parallelization
+for both high performance and numerical precision.We demonstrate when the numerical
+instability arises, and the performance of different approaches under these conditions.
+We showcase applications from the classic computation of variance as well as advanced
+applications such as stock market analysis with exponentially weighted moving models
+and Gaussian mixture modeling for cluster analysis that all benefit from this approach.},
+booktitle = {Proceedings of the 30th International Conference on Scientific and Statistical Database Management},
+articleno = {10},
+numpages = {12},
+location = {Bozen-Bolzano, Italy},
+series = {SSDBM '18}
+}
+@article{double_word,
+author = {Joldes, Mioara and Muller, Jean-Michel and Popescu, Valentina},
+title = {Tight and Rigorous Error Bounds for Basic Building Blocks of Double-Word Arithmetic},
+year = {2017},
+issue_date = {October 2017},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {44},
+number = {2},
+issn = {0098-3500},
+url = {https://doi.org/10.1145/3121432},
+doi = {10.1145/3121432},
+abstract = {We analyze several classical basic building blocks of double-word arithmetic (frequently
+called “double-double arithmetic” in the literature): the addition of a double-word
+number and a floating-point number, the addition of two double-word numbers, the multiplication
+of a double-word number by a floating-point number, the multiplication of two double-word
+numbers, the division of a double-word number by a floating-point number, and the
+division of two double-word numbers. For multiplication and division we get better
+relative error bounds than the ones previously published. For addition of two double-word
+numbers, we show that the previously published bound was incorrect, and we provide
+a new relative error bound. We introduce new algorithms for division. We also give
+examples that illustrate the tightness of our bounds.},
+journal = {ACM Trans. Math. Softw.},
+month = oct,
+articleno = {15res},
+numpages = {27},
+keywords = {double-word arithmetic, error-free transforms, double-double arithmetic, Floating-point arithmetic}
+}
+
+  
+
+
+  
+
+
