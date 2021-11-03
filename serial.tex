@@ -20,6 +20,10 @@
                                   %   J - Journal of Applied Crystallography
                                   %   M - IUCrJ
                                   %   S - Journal of Synchrotron Radiation
+\usepackage{graphicx}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
 
 \begin{document}                  % DO NOT DELETE THIS LINE
 
@@ -154,40 +158,50 @@ Other sources of noise superimposes quadratically to the Poisson noise, like the
 var(I) = (\sigma(I))^{2} = I_{raw} + (\sigma_{dark})^{2}  
 \end{equation}
 
-During the regrouping part, the coeficients of the sparse matrix needs to be squarred as described: 
+During the regrouping part, the coeficients of the sparse matrix needs to be squarred for the variance part as described: 
 \begin{equation}
-\sigma_{r}(I) = \frac{\sqrt{\sum\limits_{i \in bin_r} c_i^2 \cdot variance_i}}
+(\sigma_{r}(I))^2 = \frac{\sum\limits_{i \in bin_r} c_i^2 \cdot variance_i}
                   {\sum\limits_{i \in bin_r} c_i \cdot normalization_i} 
 \end{equation}
 
+One should distinguish the \textit{uncertainty of the mean} (sometimes referred are standard error of the mean, $sem$) 
+which describes the precision with which the mean is known (and is described in \cite{pyfai_2020}),
+from the \textit{uncertainty of the pixel value} (often referred are standard deviation, $std$). 
+Those two value differ only the normalization: $sem = std/\sqrt(normalization)$.
+Thus, the more data point, the more precisely is known the mean value.
+Since this document focuses on pixel values and the precision of individual pixel values, the \textit{standard deviation} will systematically be used in this document.  
+
 \subsubsection{Uncertainty evaluation from variance in a bin.}
-All pixels falling into a single bin should have the same numerical value and the deviation to this value can be seen as an estimation for the uncertainty.
-Variance and standard deviation are best obtained from a double pass algorithm, one pass to calculate the average value and a second to calculate the variance, 
-due to numerical stability issues. 
-But several single pass implementation exist \cite{variance2018} and offer the ability to perform a parallel reduction for average and variance. 
-If $P$ is a partition of the ensemble, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  be the weight sum, the weighted sum of $V$ and the weighted sum of deviation squared over the partition $P$ 
-where the weight for a pixel is $\omega_i = c_i \cdot normalization_i$ and the 
+If all pixels falling into a single bin should have the same numerical value and the deviation to this value can be seen as an estimation for the uncertainty.
+This is far from being the case with single crystal diffraction images but can be assumed with pure background images.
+Variance and standard deviation are usually obtained in two steps: one pass to calculate the average value and a second to calculate the deviation to the average. 
+This double pass approach is very stable numerically and can be implemented using sparse matrix multiplication but requires the access of each pixel twice. 
+ 
+Single pass implementation of variance are faster and offer the ability to perform parallel reductions, i.e. work with blocks of pixels.
+\citeasnoun{variance2018} presents a complete review, with some key equations reported and adapted to the formalism of crystallography hereafter.
+For example the weight for a pixel is $\omega_i = c_i \cdot normalization_i$
+If $P$ is a partition of the ensemble of pixels falling into a given azimuthal bin, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  
+be the weight sum, the weighted sum of $V$ and the weighted sum of deviation squared over the partition $P$: 
 \begin{equation}
-\Omega_{P} = \sum\limits_{i \in P} c_i
+\Omega_{P} = \sum\limits_{i \in P} $\omega_i = \sum\limits_{i \in P} c_i \cdot normalization_i 
 \end{equation}
 \begin{equation}
-\V_{P} = \sum\limits_{i \in P} \omega_i \cdot v_i =  \sum\limits_{i \in P} signal_i
+V_{P} = \sum\limits_{i \in P} \omega_i \cdot v_i =  \sum\limits_{i \in P} c_i \cdot signal_i
 \end{equation}
 \begin{equation}
-VV_{p} = \sum\limits_{i \in P} \omega_i \cdot (v_i - V_{P}/\Omega_{P})^2
-\end{equation}
-
-The average and the variance can be expressed as:
-\begin{equation}
-avg_{p} =  <v_P> = V_{P}/\Omega_{P} 
-\end{equation}
-
-\begin{equation}
-var_{p} =  (\sigma_P)^2 = VV_{P}/\Omega_{P} 
+VV_{p} = \sum\limits_{i \in P} \omega_i \cdot (v_i - V_{P}/\Omega_{P})^2 
 \end{equation}
 
+The average and the variance are then expressed as:
+\begin{equation}
+<I>_P = V_{P}/\Omega_{P} =  
+\end{equation}
 
-When performing the union of two partition $A$ and $B$, to allow the parallel execution of the reduction, one obtains:
+\begin{equation}
+(\sigma_P(I))^2 = VV_{P}/\Omega_{P} 
+\end{equation}
+
+Performing the union of two partition $A$ and $B$ allows the parallel reduction, which is especially efficient on GPU:
 \begin{equation}
 \Omega_{A \cup B} =  \Omega_{A} + \Omega_{B} 
 \end{equation}
@@ -200,14 +214,43 @@ When performing the union of two partition $A$ and $B$, to allow the parallel ex
 \VV_{A \cup B} =  VV_{A} + VV_{B} +  \frac{(\Omega_{A} \cdot V_{B} - \Omega_{B}\cdot V_{A})^2}{\V_{A \cup B} \cdot  V_{A} \cdot V_{B}}
 \end{equation}
   
-The issue of numerical unstability has been addressed by using double-precision arithmetics when implemented on CPU and double-word arithmetics when running on GPU \cite{double_word}.
+The numerical stability issue is addressed by using double-precision arithmetics when implemented on CPU and double-word arithmetics when running on GPU \cite{double_word}.
 
 \subsection{Histogram intensity }
 
-The figure \ref{} presents the diffraction from a single crystal of protein  as advertized by the  
+The figure \ref{fig1}a presents the diffraction from a single crystal of insulin and several curves obtained from azimuthal integration: 
+\ref{fig1}b is the azimuthaly integrated signal (blue curve). Bragg peaks are seen as spikes on top of the background.
+The plot \ref{fig1}c presents the uncertainties measured according to the Poisson law (orange curve, valid since the Pilatus is a photon counting detector) 
+or the deviation in the ring (blue curve), much larger value since Bragg peaks contribute a lot to the deviation despite they represent few pixels.         
+In the subplot \ref{fig1}d are presented histogram of pixel intensity for  pixel laying at 80mm and 160mm from the beam center. 
+Each of those histograms is composed of a bell-shaped distribution, centered on the average value with negative outliers tagged with the pixel value -1
+(this is specific to the Pilatus detector), and few positive outliers which are usually Bragg peaks.   
+Those histograms in figure \ref{fig1}d have been fitted with a gaussian curve and both the center ($\mu$) and the width ($\sigma$) of the curve match 
+roughly with the average (in \ref{fig1}b) and uncertainties (in \ref{fig1}c).  
+\begin{figure}
+\label{fig1}
+\begin{center}
+\includegraphics[width=9cm]{fig1}
+\caption{Single crystal diffraction frame obtained from insulin with a Pilatus6M (a) (part of Dectris's reference dataset) with the azimuthaly averaged signal (b), 
+before and after clipping data. Uncertainties are presented in (c) when calculated assuming a Poissonian error model or when measuring the deviation within all pixels in a ring.
+Subplot (d) presents the histogram of intensities for two rings at r=80mm and r=160mm from beam center with the distribution fitted as gaussians.}
+\end{center}
+\end{figure}
 
+The core idea of this algorithm is to model the distribution of background pixels and flag outliers like one would do in Bayesian statistical analysis \cite{Sivia2006}. 
+Positive outliers can be assigned to Bragg peaks and negative outliers indicate shadows or defective pixels. 
+The distribution can be re-centered on the background by discarding all pixels which intensity differ from the average value by more than $n$ times the standard deviation.
+By clipping values (rejecting outliers) one enforces a gaussian distibution of the remaining values.
+The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c is are the uncertainties 
+calculated after this clipping. 
+ After clipping the average and uncertainties curves have lost most of their spikes, which means that Bragg peaks and shadowed pixel were discarded.
+ 
 \subsection{Sigma-clipping}
-\cite{Sivia2006}
+The \textit{sigma-clipping} algorithm consists in iteratively applying this outlier rejection and enforces a normal (gaussian) distribution.
+There are two parameters to this algorithm: the number of iterations to perform and the rejection cut-off.
+The loop can stop as soon as the 
+Since     
+
 \subsubsection{Chauvenet}
 
 
