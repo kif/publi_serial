@@ -97,6 +97,9 @@ Abstract goes here.
 \section{Introduction}
 
 %\cite{Cheetah2014}
+The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to \ldots
+In this setup samples will be carried in front of the beam and a Jungfrau 4M detector records 
+
 
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
@@ -246,40 +249,34 @@ calculated after this clipping.
  After clipping the average and uncertainties curves have lost most of their spikes, which means that Bragg peaks and shadowed pixel were discarded.
  
 \subsection{Sigma-clipping}
-The \textit{sigma-clipping} algorithm consists in iteratively applying this outlier rejection and enforces a normal (gaussian) distribution.
-There are two parameters to this algorithm: the number of iterations to perform and the rejection cut-off.
-The loop can stop as soon as the 
-Since     
+The \textit{sigma-clipping} algorithm consists in iteratively applying the outlier rejection previously described and thus enforces 
+the background distribution to follow a normal law.
+There are two parameters to this algorithm: the number of iterations of clipping and the rejection cut-off.
 
-\subsubsection{Chauvenet}
+\subsubsection{Number of iterations:}
+Despite the execution time is proportionnal to the number of iteration of sigma-clipping, iterations should continue until no more outliers are found and the 
+background distribution actually matches a gaussian distribution. 
+Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not an issue for the execution time.       
 
-
-
+\subsubsection{Clipping threshold:}
+This threshold can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only one pixel in a ring with pure
+background signal already following a normal law. 
+Thus the threshold is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq 13), which can reach several thousands and shrinks with iterations.
+Typically the numerical value for this cut-off varies from 2 to 4.   
+\begin{equation}
+SNR_{chauvenet} =  \sqrt{2 log(\frac{size}{\sqrt{2 \pi}})}
+\end{equation}
 
 \section{Application to single crystal diffraction image compression}
+Single crystal diffraction images exhibit usually an isotropic background ontop of which are Bragg peaks.
+The sigma-clipping algorithm can be used to   
 
 \section{Application to serial crystallography}
 
 \subsection{Performance}
      % comparison with cheetah
 \section{Conclusion}
-
-\appendix
-\section{Appendix title}
-
-Text text text text text text text text text text text text text text
-text text text text text text text.
-
-\subsection{Title}
-
-Text text text text text text text text text text text text text text
-text text text text text text text.
-
-\subsubsection{Title}
-
-Text text text text text text text text text text text text text text
-text text text text text text text.
-
+drawback: textured background
 
      %-------------------------------------------------------------------------
      % The back matter of the paper - acknowledgements and references
