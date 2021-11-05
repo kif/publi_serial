@@ -44,13 +44,12 @@
 
 \cauthor[a]{Jérôme}{Kieffer}{jerome.kieffer@esrf.fr}{}
 \author[a]{Nicolas}{Coquelle}
-Samuel
-Alejandro
+\author[a]{Samuel}{Debionne}
+\author[a]{Alejandro}{Homs}
 \author[a]{Gianluca}{Santoni}
-shibom
-\author[a]{Jonathan P.}{Wright}
-\author[a]{Gavin}{Vaughan}
+\author[a]{Götz}{Andrew}
 \author[a]{Daniele}{De Sanctis}
+
 \aff[a]{European Synchrotron Radiation Facility;71, avenue des Martyrs;CS 40220;38043 Grenoble Cedex 9 \country{France}}
 
      % Use \shortauthor to indicate an abbreviated author list for use in
@@ -275,16 +274,121 @@ Single crystal diffraction images exhibit usually an isotropic background on top
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the background value plus $p$ standard deviation. This value $p$ controls the amount of data to store and provides also an upper level for the compression ratio obtained since with $p=1$, 16\% of the pixel are stored but only 2.4\% for $p=2$ and 0.15\% for $p=3$. 
-Stored pixels need to record not only the intensity but also the position. 
-Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored. 
+
+Stored pixels need to record not only its intensity but also its position. 
+Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
+The following section presents 
+
 \subsection{Sparsification}
 
-\subsection{Densification}
+The sigma-clipping algorithm was originally written for real-time sparsification of synchrotron serial crystallography data and its integration into the LIMA2 \cite{lima2} detector control system for the Jungfrau 4M detector used at ESRF ID29 is described in \cite{sri2021}.
+The real-time constrain imposed to develop code running on GPU since those devices are several times
+faster than equivalent processors (even when running on all cores).
+All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package.
+A command line tool called `sparsify-Bragg' is available for off-line testing and .
 
-\subsection{Quality}
+All the pixel coordinates and intensities are finally stored in a HDF5 \cite{hdf5} container following the nexus \cite{nexus} convention, together with a snippet of Python code explaining how to rebuild the dataset.
+All sparse datasets (averaged and uncertainties curves, pixel corrdinates, ...) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
+
+\subsection{Densification}
+Since no crystallographic software package are aware (yet) of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
+The software consstrains for this densification code very different from the one for sparisfication, this is why `densify-Bragg' was optimized to run on multicore CPU. 
+The only important options are, beside the file-format and name, whether or the background noise has to be reconstructed or not. 
+Some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result with an almost constant background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background restored. 
+Shaded regions are never reconstructed properly and should be masked adequately in the reduction software.
 
 \subsection{Performances}
+The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
+All those factors have been evaluated on a classical sample, Lysozym, and rotational data were collected on an Eiger 4M detector (selected for its similarity in size and performances with the Jungfrau detector). 
+This reference dataset is the one made publicly available by Dectris to \cite{lysozym}. 
 
+\subsubsection{Compression ratio:} 
+After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure. 
+The maximum achievable compression ratio for $2\sigma$ is 42x. 
+In production condition, one would likely select a lower threshold to collect more pixels.
+
+For conformance with the state of the art, the reference the dataset size is the one re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for  which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
+
+\subsubsection{Compression speed:}
+\begin{verbatim}
+kieffer@scisoft14:~/Dectris/EIGER_X_4M_lyso/demo$ sparsify-Bragg ../collect_01_00001_master.h5 -p ../geometry.poni  --bins 500 --unit="r_mm" --cycle=5 --cutoff-clip=0  --noise=1 --profile -m ../mask.npy --cutoff-pick=2.0 --error-model=poisson -o sparse.h5
+INFO:pyFAI.method_registry:Degrading method from Method(dim=1, split='pseudo', algo='histogram', impl='*', target=None) -> Method(dim=1, split='bbox', algo='histogram', impl='*', target=None)
+INFO:pyFAI.geometry:Unable to parse ../geometry.poni as JSON file, defaulting to PoniParser
+WARNING:pyFAI.ext.splitBBoxCSR:Pixel splitting desactivated !
+INFO:silx.opencl.processing:379.313MB are needed on device: TITAN V,  which has 12652.839MB
+INFO:silx.opencl.processing:Compiling file ['silx:opencl/doubleword.cl', 'pyfai:openCL/preprocess.cl', 'pyfai:openCL/memset.cl', 'pyfai:openCL/ocl_azim_CSR.cl', 'pyfai:openCL/peak_finder.cl', 'pyfai:openCL/peakfinder8.cl'] with options -D NBINS=500  -D NIMAGE=4485690 -D WORKGROUP_SIZE=1024
+INFO:silx.opencl.processing:■■■■■■■■■■■■■■■■■■■]  100%  Saving: sparse.h5                      
+OpenCL kernel profiling statistics in milliseconds for: OCL_PeakFinder
+                                       Kernel name (count):      min   median      max     mean      std
+                                 copy H->D indices (    1):    3.730    3.730    3.730    3.730    0.000
+                                  copy H->D indptr (    1):    0.001    0.001    0.001    0.001    0.000
+                                    copy H->D mask (    1):    1.096    1.096    1.096    1.096    0.000
+                                copy H->D radius1d (    1):    0.002    0.002    0.002    0.002    0.000
+                                copy H->D radius2d (    1):    3.489    3.489    3.489    3.489    0.000
+                               copy raw H->D image ( 1800):    3.615    5.064    5.718    4.893    0.412
+                                 cast u32_to_float ( 1800):    0.070    0.075    0.103    0.074    0.001
+                                         memset_ng ( 1800):    0.004    0.004    0.010    0.004    0.000
+                                       corrections ( 1800):    0.169    0.171    0.178    0.172    0.001
+                                   csr_sigma_clip4 ( 1800):    3.077    3.230    4.140    3.267    0.133
+                                    memset counter ( 1800):    0.004    0.004    0.015    0.004    0.001
+                                       peak_search ( 1800):    0.261    0.263    0.272    0.263    0.001
+                                 copy D->H counter ( 1800):    0.001    0.001    0.010    0.001    0.000
+                  copy D->D + cast uint32 intenity ( 1800):    0.007    0.010    0.025    0.010    0.002
+                           copy D->H peak_position ( 1800):    0.003    0.006    0.029    0.009    0.005
+                           copy D->H peak_intensty ( 1800):    0.003    0.006    0.029    0.009    0.005
+                          copy D->H background_avg ( 1800):    0.002    0.002    0.004    0.002    0.000
+                          copy D->H background_std ( 1800):    0.002    0.002    0.003    0.002    0.000
+________________________________________________________________________________
+                       Total OpenCL execution time        : 15687.401ms
+
+\end{verbatim}
+
+The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
+an IBM AC922 using Power9 processors and Nvidia Tesla V100 GPU. 
+The code is serial takes about 9 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
+In online condition, multiple processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
+
+\subsubsection{Decompression speed:} 
+The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30s while the writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
+Densification is thus faster than writing on disk.
+The reading of the input sparse dataset is negligible (<2s).
+
+\subsubsection{Quality of the restored dataset:} 
+The densified dataset was processed via XDS and the summary indicator for the quality of the results are compared with the one coming from the reduction of the original dataset. 
+Since those integrator are measured on integral peaks with $I/\sigma>3$ and the sparsification was performed
+with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{} hereafter:
+\begin{verbatim}
+ R-FACTOR
+ observed = (SUM(ABS(I(h,i)-I(h))))/(SUM(I(h,i)))
+ expected = expected R-FACTOR derived from Sigma(I)
+
+ COMPARED = number of reflections used for calculating R-FACTOR
+ I/SIGMA  = mean of intensity/Sigma(I) of unique reflections
+            (after merging symmetry-related observations)
+ Sigma(I) = standard deviation of reflection intensity I
+            estimated from sample statistics
+
+ R-meas   = redundancy independent R-factor (intensities)
+            Diederichs & Karplus (1997), Nature Struct. Biol. 4, 269-275.
+
+ CC(1/2)  = percentage of correlation between intensities from
+            random half-datasets. Correlation significant at
+            the 0.1% level is marked by an asterisk.
+            Karplus & Diederichs (2012), Science 336, 1030-33
+ Anomal   = percentage of correlation between random half-sets
+  Corr      of anomalous intensity differences. Correlation
+            significant at the 0.1% level is marked.
+ SigAno   = mean anomalous difference in units of its estimated
+            standard deviation (|F(+)-F(-)|/Sigma). F(+), F(-)
+            are structure factor estimates obtained from the
+            merged intensity observations in each parity class.
+  Nano    = Number of unique reflections used to calculate
+            Anomal_Corr & SigAno. At least two observations
+            for each (+ and -) parity are required.
+
+reference: total      119561   13801     14844       93.0\%      12.5\%     15.0\%   119049   10.52     13.2\%    99.7*   -18    0.630   10151
+sparse:    total      120588   13802     14837       93.0\%      11.4\%     12.1\%   120131   10.17     12.0\%    99.7*   -12    0.631   10176
+\end{verbatim}
 \section{Application to serial crystallography}
 
 \subsection{Performance}
@@ -299,7 +403,8 @@ drawback: textured background
      % Acknowledgements come after the appendices
 
 \ack{Acknowledgements}
-
+The authors would like to thank Gavin Vaughan, scientist at Materials beamline at the ESRF,  for the constructive discussion about sigma-clipping versus median filtering. 
+We would like to thank also Jonathan P. Wright and Carlotta Giacobbe for offering us the ability to test those algorithms on small molecule data and validate the concept on the ID11 beamline from the ESRF.
 
 
 \bibliographystyle{iucr}
