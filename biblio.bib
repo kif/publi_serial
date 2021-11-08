@@ -1282,7 +1282,16 @@ keywords = {NeXus data format, data exchange, data archiving, platform-independe
     year = {2000-2021},
     url = {http://www.hdfgroup.org/HDF5}
 }
-
+@misc{hdf5_doe,
+title = {HDF5},
+author = {Koziol, Quincey and Robinson, Dana},
+abstractNote = {HDF5 is a data model, library, and file format for storing and managing data. It supports an unlimited variety of datatypes, and is designed for flexible and efficient I/O and for high volume and complex data. HDF5 is portable and is extensible, allowing applications to evolve in their use of HDF5. The HDF5 Technology suite includes tools and applications for managing, manipulating, viewing, and analyzing data in the HDF5 format.},
+doi = {10.11578/dc.20180330.1},
+url = {https://doi.org/10.11578/dc.20180330.1},
+howpublished = {[Computer Software] \url{https://doi.org/10.11578/dc.20180330.1}},
+year = {2018},
+month = {mar}
+}
 @article{SSX2015,
 author = "Coquelle, Nicolas and Brewster, Aaron S. and Kapp, Ulrike and Shilova, Anastasya and Weinhausen, Britta and Burghammer, Manfred and Colletier, Jacques-Philippe",
 title = "{Raster-scanning serial protein crystallography using micro- and nano-focused synchrotron beams}",
@@ -1421,6 +1430,7 @@ doi = {10.3847/1538-4365/aad23d},
 url = {https://doi.org/10.3847/1538-4365/aad23d},
 year = 2018,
 month = {aug},
+journal = {The Astrophysical Journal Supplement Series},
 publisher = {American Astronomical Society},
 volume = {238},
 number = {1},
@@ -1431,3 +1441,82 @@ abstract = {Sigma clipping is commonly used in astronomy for outlier rejection, 
 }
 
 
+@inproceedings{sri2021,
+author = {Debionne, S. and Homs, A. and Claustre, L. and Kieffer, J. and De Sanctis, D. and Santoni, G. and Goetz, A. and Meyer, J.}, 
+title = {LImA2, a distributed acquisition system for the new ESRF-EBS Serial-MX 
+beamline}, 
+abstract = {With the advance of modular X-ray detector in terms of frame rate and 
+size, the need for a scalable and portable Data Acquisition System (DAQ) 
+to deal with the ever increasing data bandwidth is ubiquitous. 
+Similarly, the extremely high data rates put limits on Data Storage that 
+require Online Data Analysis (ODA) and Reduction (ODR).
+In this work, we introduce LImA2, a distributed evolution of LImA[1], 
+developed for the new ESRF-EBS Serial-MX beamline ID29. At ID29, the 
+detector chosen, a PSI JungFrau-4M detector[2], is capable of generating 
+up to 18.4 GB/s of raw data. In order to cope with this throughput, the 
+data have to be reduced in real-time before they can be written to 
+permanent storage. A dedicated processing data flow has been developed 
+for both the detector specific frame reconstruction and the integration 
+of online data reduction based on azimuthal integration[3] and 
+Bragg-peak finding.
+LImA2 is a distributed MPI application with control and data receivers 
+processes that collaborate to perform the acquisition and the online 
+processing. Scalability is achieved with increasing the number of 
+receivers, eventually distributed on multiple computers. We support two 
+configurations/topologies: partial frame dispatch (one receiver per 
+detector module) and full frame dispatch (one receiver acquires a full 
+detector frame).
+Data receivers have two responsibilities: 1. DAQ, implemented on top of 
+the vendor SDK with respect to the technology used (sockets, DPDK, 
+RoCE); 2. ODA, instantiate a choice of processing graph, parallelizing 
+and delegating to hardware accelerators tasks such as feature extraction 
+and data visualization. Different accelerators are supported. For ID29, 
+GPUs are used to perform gain/pedestal correction and azimuthal 
+integration to generate the reduced dataset and IBM Power9 NX 
+accelerators perform GZIP compression in real-time.},
+booktitle = {Proceedings of the $14^{th}$ international conference on Synchrotron Radiation Instrumentation (SRI2021)}, 
+year = 2022,
+url = {https://indico.desy.de/event/27430/abstracts/}
+}
+
+@ONLINE{lima2,
+author = {Debionne, S. and Homs, A. and Claustre, L.}, 
+title = {{Library for IMage Acquisition} version 2}, 
+year = 2022,
+url={https://gitlab.esrf.fr/limagroup/lima2},
+}
+
+@ONLINE{crysalis,
+year = {2015},
+title={CrysAlisPro Software System}, 
+version={1.171.38.41},
+author={{Rigaku Oxford Diffraction}}, 
+url={https://www.rigaku.com/fr/products/smc/crysalis}
+}
+@article{xds,
+author = "Kabsch, Wolfgang",
+title = "{Integration, scaling, space-group assignment and post-refinement}",
+journal = "Acta Crystallographica Section D",
+year = "2010",
+volume = "66",
+number = "2",
+pages = "133--144",
+month = "Feb",
+doi = {10.1107/S0907444909047374},
+url = {https://doi.org/10.1107/S0907444909047374},
+abstract = {Important steps in the processing of rotation data are described that are common to most software packages. These programs differ in the details and in the methods implemented to carry out the tasks. Here, the working principles underlying the data-reduction package {\it XDS} are explained, including the new features of automatic determination of spot size and reflecting range, recognition and assignment of crystal sym{\-}metry and a highly efficient algorithm for the determination of correction/scaling factors.},
+keywords = {XDS, integration, scaling, space-group assignment, post-refinement},
+}
+@article{bitshuffle,
+title = {A compression scheme for radio data in high performance computing},
+journal = {Astronomy and Computing},
+volume = {12},
+pages = {181-190},
+year = {2015},
+issn = {2213-1337},
+doi = {https://doi.org/10.1016/j.ascom.2015.07.002},
+url = {https://www.sciencedirect.com/science/article/pii/S2213133715000694},
+author = {K. Masui and M. Amiri and L. Connor and M. Deng and M. Fandino and C. Höfer and M. Halpern and D. Hanna and A.D. Hincks and G. Hinshaw and J.M. Parra and L.B. Newburgh and J.R. Shaw and K. Vanderlinde},
+keywords = {Radio astronomy, Data compression, HDF5, High performance computing},
+abstract = {We present a procedure for efficiently compressing astronomical radio data for high performance applications. Integrated, post-correlation data are first passed through a nearly lossless rounding step which compares the precision of the data to a generalized and calibration-independent form of the radiometer equation. This allows the precision of the data to be reduced in a way that has an insignificant impact on the data. The newly developed Bitshuffle lossless compression algorithm is subsequently applied. When the algorithm is used in conjunction with the HDF5 library and data format, data produced by the CHIME Pathfinder telescope is compressed to 28\% of its original size and decompression throughputs in excess of 1GB/s are obtained on a single core.}
+}
