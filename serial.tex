@@ -203,15 +203,15 @@ VV_{p} = \sum\limits_{i \in P} \omega_i \cdot (v_i - V_{P}/\Omega_{P})^2
 
 The average and the variance are then expressed as:
 \begin{equation}
-<I>_P = V_{P}/\Omega_{P} =  \frac{\sum\limits_{i \in P} c_i \cdot signal_i}
+<I>_P = \frac{V_{P}}{\Omega_{P}} =  \frac{\sum\limits_{i \in P} c_i \cdot signal_i}
                         {\sum\limits_{i \in P} c_i \cdot norm_i} 
 \end{equation}
 
 \begin{equation}
-(\sigma_P(I))^2 = VV_{P}/\Omega_{P} 
+(\sigma_P(I))^2 = \frac{VV_{P}}{\Omega_{P}}
 \end{equation}
 
-Performing the union of two partition $A$ and $B$ allows the parallel reduction, which is especially efficient on GPU:
+Performing the union of two partitions $A$ and $B$ allows the parallel reduction, which is especially efficient on GPU:
 \begin{equation}
 \Omega_{A \cup B} =  \Omega_{A} + \Omega_{B} 
 \end{equation}
@@ -291,8 +291,7 @@ The following section presents
 
 The sigma-clipping algorithm was originally written for real-time sparsification of synchrotron serial crystallography data and its integration into the LIMA2 \cite{lima2} detector control system for the Jungfrau 4M detector used at ESRF ID29 is described in \cite{sri2021}.
 The real-time constrain imposed to develop code running on GPU since those devices are several times
-faster than equivalent processors (even when running on all cores).
-%What do you mean by equivalent? How s a processor equivalent to a GPU?
+faster than equivalently priced processors.
 All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package.
 A command line tool called `sparsify-Bragg' is available for off-line testing.
 
@@ -312,11 +311,19 @@ All those factors have been evaluated on a classical sample, Lysozyme, and rotat
 This reference dataset is the one made publicly available by Dectris to \cite{lysozym}. 
 
 \subsubsection{Compression ratio} 
-After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure. 
-The maximum achievable compression ratio for $2\sigma$ is 42x. 
-In production condition, one would likely select a lower threshold to collect more pixels.
+After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
+For conformance with the state of the art, the reference the dataset size was re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
-For conformance with the state of the art, the reference the dataset size is the one re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for  which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
+The maximum theoretical compression ratio for $2\sigma$ is 22x (from normal distribution: $1/(1-erf(\sigma/\sqrt{2})$), neglecting the storage of the background data and effects of the lossless compression, intensity and position needs to be stored for each pixel).
+To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack
+to produce an image without any peaks. 
+A background dataset of 1800 of those images sparsifies into a 11MB HDF5 file which represents a compression ratio of 136x ! 
+Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compress great.
+
+In production conditions, one would like to tune this threshold to the minimal value which guarantees a compression ratio large enough to allow the storage of all data.
+For the previous example (ID29) where a Jungfrau 4M operating at 1kHz, which frames needs some `pedestal` preprocessing converting uint16 integers into float32 data types, thus doubling the needed bandwidth. 
+The detector outputs the data via 8x 10 Gbit/s network links and we need to saved then all with a single  25 Gbit/s link, making a minimum compression ratio of 6.4x or an equivalent cutoff of $1.4\sigma$.
+
 
 \subsubsection{Compression speed:}
 %\begin{verbatim}
@@ -399,7 +406,7 @@ reference: total      119561   13801     14844       93.0\%      12.5\%     15.0
 sparse:    total      120588   13802     14837       93.0\%      11.4\%     12.1\%   120131   10.17     12.0\%    99.7*   -12    0.631   10176
 \end{verbatim}
 \section{Application to serial crystallography}
-
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data to be stored by  selecting which frame actually deserve to be saved (Veto algorithm).
 \subsection{Performance}
      % comparison with cheetah
 \section{Conclusion}
