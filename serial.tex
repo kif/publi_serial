@@ -45,12 +45,14 @@
 \cauthor[a]{Jérôme}{Kieffer}{jerome.kieffer@esrf.fr}{}
 \author[a]{Nicolas}{Coquelle}
 \author[a]{Samuel}{Debionne}
+\author[b]{Shibom}{Basu}
 \author[a]{Alejandro}{Homs}
 \author[a]{Gianluca}{Santoni}
 \author[a]{Götz}{Andrew}
 \author[a]{Daniele}{De Sanctis}
 
 \aff[a]{European Synchrotron Radiation Facility;71, avenue des Martyrs;CS 40220;38043 Grenoble Cedex 9 \country{France}}
+\aff[b]{EMBL Grenoble \country{France}}
 
      % Use \shortauthor to indicate an abbreviated author list for use in
      % running heads (you will need to uncomment it).
@@ -94,11 +96,25 @@ Abstract goes here.
      % and \subsubsection's as required.
 
 \section{Introduction}
-
+\subsection{Serial crystallography and id29}
+%not sure we need subsections here
+Serial crystallography is a relatively new technique in structural biology. 
+With the term, we describe a family of techniques where multiple crystals (hundreds or thousands) are exsposed in a serial way to the X-ray beam to collect a complete dataset. 
+This is in contrast with traditional rotation crystallography, where a complete dataset is collected fro ma single crystal rotating around one axis. 
+The serial approach is particularly useful to try to overcome the limitations of radiation damage, in particular in very small crystals.
+The technique was first developed for X-ray free electron lasers (XFEL) %cite{chapman2011}
+but recently also adapted to be performed at synchrotron lightsources.
+A big limittion of this application is that the environment of MX beamlines is extremelly specialized towards rotation data collection. %explain more clearly if needed
 %\cite{Cheetah2014}
-The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to \ldots
-In this setup samples will be carried in front of the beam and a Jungfrau 4M detector records 
-
+The higher flux requierements for this method make it a clear candidate to be performed at 4th generation synchrotron sources, like the new ESRF-EBS update.
+The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to have a dedicated environment to perform SSX experiments.
+The beamline will feature a Jungfrau 4M detector, operating at 1KHz.
+The data analysis and storage are thus anticipated to be extremely challenging. 
+\subsection{Requirements for online data processing}
+%again, this is not great, as it is not the text below. 
+Efficient processing of raw images is vital for macromolecular serial crystallography.
+Multiple challenges are present, in particular partiality and low completeness.
+To this reason, careful and precise location of Bragg peaks is vital.
 
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
@@ -137,7 +153,7 @@ Intensity can also be normalized by the incoming flux $I_0$, which is independen
 
 \subsubsection{Azimuthal averaging} 
 %This is my understanding: before you had a
-Historically, the azimutal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
+Historically, the azimuthal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
 The azimuthal transformation is a linear transformation, and it can thus be implemented as a  matrix multiplication between a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
 The compressed sparse row (CSR) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
