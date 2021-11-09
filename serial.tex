@@ -293,7 +293,7 @@ This cut-off value $n$ controls the amount of data to store and provides also a 
 \end{center}
 \end{figure}
 
-For each stored pixels we need to record not only its intensity but also its position. 
+For each pixel which  we need to record not only its intensity but also its position. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
 
 The following section presents how the sparsification is performed on an example of Lyzozyme dataset obtained using rotational data-collection.
@@ -373,7 +373,7 @@ The detector outputs the data via 8x 10 Gbit/s network links and the storage is 
 
 The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
 an IBM AC922 using Power9 processors and Nvidia Tesla V100 GPU. 
-The code is and serial takes about 9 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
+The code is and serial takes about 4 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
 In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
 
 \subsubsection{Decompression speed:} 
@@ -410,9 +410,23 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 
 \section{Application to serial crystallography}
 A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving out which frame actually deserve to be saved ("Veto" algorithm).
-The sigma clipping algorithm can be adapted to select pixels which   
-\subsection{Performance}
-     % comparison with cheetah
+
+The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be peaks. 
+For this,  several additional checks are performed on the local neighborhood which is a small patch (typically 3x3 pixels):
+\begin{itemize}
+\item The considered pixel is the maximum of the local neighborhood.
+\item The number of pixels in the local neighborhood satisfying the intensity condition ($|I-\bar{I} |> n \sigma_{I}$)  is above a given minimum.
+\end{itemize}
+
+For each peak, the pixel coordinate, the precise centroïd, the sum of the data and its propagated deviation are recorded and reported. 
+Those results can be subsequently injected into CrystFEL \cite{CrystFEL} which is performing the indexing of
+the data and validating if those peaks corresponds to an actual crystal lattice \cite{nanopeakcell}.
+
+
+\subsection{Quality of the extracted peaks}
+The result of this algorithm is compared with the "peakfinder8" described in \cite{Cheetah2014} and interfaced in Python via OnDA \cite{onda}
+\subsection{Performances}
+
 \section{Conclusion}
 drawback: textured background
 
