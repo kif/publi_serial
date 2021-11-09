@@ -103,7 +103,7 @@ In this setup samples will be carried in front of the beam and a Jungfrau 4M det
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
 
-The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material, giving isotropic signal ideally presenting only smooth variations.
+The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
 For this the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
 
 The initial implementation in pyFAI \cite{pdj2013} relied on a 2D radial transform followed by a median filter in the azimuthal dimension 
@@ -112,11 +112,9 @@ Despite this method has been successfully used for large dataset analysis \cite{
 * The 2D averaging mixes the signal of several pixels and blurs the signal. 
 * Pixel-splitting is needed to leverage the moiré effect in the 2D averaging, but this increases further the blurring. 
 * The 1D curve obtained after the application of the median filter shows sharp jumps from one azimuthal bin to its neighbour.
-* Median filter is complicated and requires a lot of memory.
-%Conceptually complicated ot computationally heavy?
-    
-The coming sections present an efficient way to perform the azimuthal averaging and the associated variance propagation, 
-and its application to the statistical analysis and extraction of background from a diffraction image. 
+* Median filter is computationally heavy since it requires to sort out every azimuthal bin.
+
+The coming sections present an efficient way to perform the azimuthal averaging and the associated variance propagation, and its application to the statistical analysis and extraction of background from a diffraction image. 
 
 \subsection{Efficient azimuthal averaging and uncertainties evaluation}
 
@@ -141,7 +139,7 @@ Intensity can also be normalized by the incoming flux $I_0$, which is independen
 %This is my understanding: before you had a
 Historically, the azimutal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
 The azimuthal transformation is a linear transformation, and it can thus be implemented as a  matrix multiplication between a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
-The compressed sparse row (CRS) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
+The compressed sparse row (CSR) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
 In the case where pixel splitting is deactivated those coefficients  ($c_{i,r}$) are always one (and zero elsewhere) since each pixel contribute to a single bin.
 The sparse matrix multiplication can be used to sum efficiently values for all pixels belonging to the same bin.
@@ -153,15 +151,15 @@ The summed signal divided by the summed normalization provides the intensity ave
 \end{equation}  
 
 \subsubsection{Uncertainty evaluation from Poisson law}
-Photon counting detectors suffer from several uncertainties, among which the most important one is usually the counting statistics (often referred as Poisson law),
+Photon counting detectors, like Eiger detectors, suffer from several uncertainties, among which the most important one is the counting statistics (often referred as Poisson law),
 stating that the lower limit for the variance for a pixel is the number of events counted.
 Other sources of noise, like the dark current noise,  superimpose quadratically to the Poisson noise as presented in equation \ref{poisson}:     
 \begin{equation}
 \label{poisson}
 var(I) = (\sigma(I))^{2} = I_{raw} + (\sigma_{dark})^{2}  
 \end{equation}
-%Jerome, I don't think the regrouping has been introduced before. MAybe worth doing it.
-During the regrouping part, the coefficients of the sparse matrix needs to be squared for the numerator to have uncertainties $\sigma$ proportional to the raw signal, as shown in equation \ref{varianceP}.
+
+During the propagation of the variance, during the azimuthal integration, the coefficients of the sparse matrix needs to be squared at the numerator equation \ref{varianceP} to have uncertainties $\sigma$ proportional to the fraction of the pixel considered.
 \begin{equation}
 \label{varianceP}
 (\sigma_{r}(I))^2 = \frac{\sum\limits_{i \in bin_r} c_{i,r}^2 \cdot var_i}
@@ -174,7 +172,12 @@ Those two value differ only by square root of the number of measurements: $sem =
 Thus, the more data point are collected, the more precisely the mean value is known.
 Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used in this document.  
 
-\subsubsection{Uncertainty evaluation from variance in a bin.}
+\subsubsection{Uncertainty evaluation from the variance in a bin.}
+
+Unlike photon counting detectors, most detectors are not following the Poisson law and the establishment of a formula $\sigma^2 = f(I)$ is not simple if possible at all. 
+In the case of the Jungfrau detector considered for the ESRF-ID29 beamline, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
+A generic approach is taken here in measuring the variance in every single bin.
+
 When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities could be used to estimate the uncertainty.
 Variance (and standard deviation) are usually obtained in a two steps procedure: one pass to calculate the average value (Eq\ref{avg})and a second to calculate the deviation to the average (Eq\ref{varA}. 
 This double pass approach can be implemented using sparse matrix multiplication. It requires the access to each pixel twice and extra storage space, but it is very stable numerically.
@@ -203,15 +206,15 @@ VV_{p} = \sum\limits_{i \in P} \omega_i \cdot (v_i - V_{P}/\Omega_{P})^2
 
 The average and the variance are then expressed as:
 \begin{equation}
-<I>_P = V_{P}/\Omega_{P} =  \frac{\sum\limits_{i \in P} c_i \cdot signal_i}
+<I>_P = \frac{V_{P}}{\Omega_{P}} =  \frac{\sum\limits_{i \in P} c_i \cdot signal_i}
                         {\sum\limits_{i \in P} c_i \cdot norm_i} 
 \end{equation}
 
 \begin{equation}
-(\sigma_P(I))^2 = VV_{P}/\Omega_{P} 
+(\sigma_P(I))^2 = \frac{VV_{P}}{\Omega_{P}}
 \end{equation}
 
-Performing the union of two partition $A$ and $B$ allows the parallel reduction, which is especially efficient on GPU:
+Performing the union of two partitions $A$ and $B$ allows the parallel reduction, which is especially efficient on GPU:
 \begin{equation}
 \Omega_{A \cup B} =  \Omega_{A} + \Omega_{B} 
 \end{equation}
@@ -280,19 +283,28 @@ SNR_{chauvenet} =  \sqrt{2 log(\frac{size}{\sqrt{2 \pi}})}
 Diffraction images from a single macromolecular crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
-This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the background value plus $p$ standard deviation. This value $p$ controls the amount of data to store and provides also an upper level for the compression ratio obtained since with $p=1$, 16\% of the pixel are stored but only 2.4\% for $p=2$ and 0.15\% for $p=3$.
-%derived from equation ?? 
+This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
+This cut-off value $n$ controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded $n=1$,  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
+\begin{figure}
+\label{distribution}
+\begin{center}
+\includegraphics[width=9cm]{distribution}
+\caption{Normal distribution and probability of having pixels with intensity above certain thresholds.}
+\end{center}
+\end{figure}
 
 For each stored pixels we need to record not only its intensity but also its position. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
-The following section presents 
+
+The following section presents how the sparsification is performed on an example of Lyzozyme dataset obtained using rotational data-collection.
+Those data are then densified again to regenerate the data and processed in the standard XDS reduction tool \cite{xds}.
+Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
 
 \subsection{Sparsification}
 
 The sigma-clipping algorithm was originally written for real-time sparsification of synchrotron serial crystallography data and its integration into the LIMA2 \cite{lima2} detector control system for the Jungfrau 4M detector used at ESRF ID29 is described in \cite{sri2021}.
 The real-time constrain imposed to develop code running on GPU since those devices are several times
-faster than equivalent processors (even when running on all cores).
-%What do you mean by equivalent? How s a processor equivalent to a GPU?
+faster than equivalently priced processors.
 All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package.
 A command line tool called `sparsify-Bragg' is available for off-line testing.
 
@@ -312,11 +324,19 @@ All those factors have been evaluated on a classical sample, Lysozyme, and rotat
 This reference dataset is the one made publicly available by Dectris to \cite{lysozym}. 
 
 \subsubsection{Compression ratio} 
-After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure. 
-The maximum achievable compression ratio for $2\sigma$ is 42x. 
-In production condition, one would likely select a lower threshold to collect more pixels.
+After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
+For conformance with the state of the art, the reference the dataset size was re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
-For conformance with the state of the art, the reference the dataset size is the one re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for  which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
+The maximum theoretical compression ratio for $2\sigma$ is 22x (figure \ref{distribution}, neglecting the storage of the background data and effects of the lossless compression).
+To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack
+to produce an image without peaks. 
+A background dataset of 1800 such images sparsifies into a 11MB HDF5 file which represents a compression ratio of 136x ! 
+Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compresses great with bitshuffle-LZ4.
+
+In production conditions, one would like to tune this threshold to the minimal value which guarantees a compression ratio large enough to allow the storage of all data.
+For ESRF-ID29, where a Jungfrau 4M is operating at 1kHz, some `pedestal` preprocessing convert 16-bits integers into 32-bits floating point values and double the needed bandwidth for data saving. 
+The detector outputs the data via 8x 10 Gbit/s network links and the storage is performed via  a single  25 Gbit/s link, making a minimum compression ratio of 6.4x which is equivalent to a cutoff at $1.4\sigma$ (Fig. \ref{distribution}).
+
 
 \subsubsection{Compression speed:}
 %\begin{verbatim}
@@ -365,41 +385,32 @@ The reading of the input sparse dataset is negligible (<2s).
 \subsubsection{Quality of the restored dataset:} 
 The densified dataset was processed via XDS and the summary indicator for the quality of the results are compared with the one coming from the reduction of the original dataset. 
 Since those integrator are measured on integral peaks with $I/\sigma>3$ and the sparsification was performed
-with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{} hereafter:
-\begin{verbatim}
- R-FACTOR
- observed = (SUM(ABS(I(h,i)-I(h))))/(SUM(I(h,i)))
- expected = expected R-FACTOR derived from Sigma(I)
+with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{xds_summary}, hereafter.
 
- COMPARED = number of reflections used for calculating R-FACTOR
- I/SIGMA  = mean of intensity/Sigma(I) of unique reflections
-            (after merging symmetry-related observations)
- Sigma(I) = standard deviation of reflection intensity I
-            estimated from sample statistics
+\begin{table}[1]
+\begin{center}
+\label{xds_summary}
+\caption{Quality indicators after peak integration and averaging using XDS\cite{xds}}.
+\begin{tabular}{|c|c c c|c c c|} 
+\hline
+Indicator & \multicolumn{3}{c|}{Initial dataset}} & \multicolumn{3}{c|}{Lossy compressed dataset ($2\sigma$)} \\ 
+          & 2.91\AA & 2.06\AA & all & 2.91\AA & 2.06\AA & all \\
+\hline
+Completeness                                        & 98.8& 90.8 & 93.8\% & 99.8& 90.6 & 93.5\% \\ 
+$R_{obs}=\frac{\sum |I_{h,i}-I_{i}|}{\sum I_{h,i}}$ & 9.9 & 57.3& 12.5\% & 9.2 & 61.2&  11.4\%\\ 
+$R_{expected}$                                      & 8.8 & 73.2& 15.0\% & 8.2 & 68.7 &  12.1\%\\
+$R_{meas}$ \cite{Rmeas}  &10.3 &61.2& 13.2\% & 9.6 & 65.5 & 12.0\%\\
+$CC_{1/2}$ \cite{cc1/2}  & 99.7 &94.0 & 99.7   & 99.6 & 95.4 & 99.7  \\
+$<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
- R-meas   = redundancy independent R-factor (intensities)
-            Diederichs & Karplus (1997), Nature Struct. Biol. 4, 269-275.
 
- CC(1/2)  = percentage of correlation between intensities from
-            random half-datasets. Correlation significant at
-            the 0.1% level is marked by an asterisk.
-            Karplus & Diederichs (2012), Science 336, 1030-33
- Anomal   = percentage of correlation between random half-sets
-  Corr      of anomalous intensity differences. Correlation
-            significant at the 0.1% level is marked.
- SigAno   = mean anomalous difference in units of its estimated
-            standard deviation (|F(+)-F(-)|/Sigma). F(+), F(-)
-            are structure factor estimates obtained from the
-            merged intensity observations in each parity class.
-  Nano    = Number of unique reflections used to calculate
-            Anomal_Corr & SigAno. At least two observations
-            for each (+ and -) parity are required.
-
-reference: total      119561   13801     14844       93.0\%      12.5\%     15.0\%   119049   10.52     13.2\%    99.7*   -18    0.630   10151
-sparse:    total      120588   13802     14837       93.0\%      11.4\%     12.1\%   120131   10.17     12.0\%    99.7*   -12    0.631   10176
-\end{verbatim}
 \section{Application to serial crystallography}
-
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data to be stored by selecting which frame actually deserve to be saved ("Veto" algorithm).
+The sigma clipping algorithm can be adapted to select pixels which   
 \subsection{Performance}
      % comparison with cheetah
 \section{Conclusion}
