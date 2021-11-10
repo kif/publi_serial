@@ -445,8 +445,24 @@ the data and validating if those peaks corresponds to an actual crystal lattice 
 
 
 \subsection{Quality of the extracted peaks}
-The result of this algorithm is compared with "peakfinder8" described in \citeasnoun{Cheetah2014} and interfaced in Python via OnDA \cite{onda}
+Figure \ref{peakfinder} presents the comparison between the original "peakfinder8" described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI. 
+
+\begin{figure}
+\label{peakfinder}
+\begin{center}
+\includegraphics[width=12cm]{peakfinder}
+\caption{Comparison of the reference \textit{peakfinder8} as implemented in Cheetah (in green) and the version from pyFAI (in red) on top of a Pilatus6M MX diffraction frame.}
+\end{center}
+\end{figure}
+
+The original implementation of "peakfiner8" seams to be much more sensitive to noise compared to the implementation from pyFAI, since it found more than 10x more peaks (3346 vs 296 peaks). 
+
+TODO: indexing ratio in Crystfel
+
+%JK: I am probably not using properly peakfinder8 ... any help welcome on that
 \subsection{Performances}
+The runtime fro pyFAI is 9ms while it takes 150ms for Cheetah ... but pyFAI performs most calculation on a GPU which may not be generally available.
+Nota: The sigma-clipping is now available on CPU in pyFAI, but neither the compression nor the peakfinder is ported yet.
 
 \section{Conclusion}
 drawback: textured background
