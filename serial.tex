@@ -96,19 +96,24 @@ Abstract goes here.
      % and \subsubsection's as required.
 
 \section{Introduction}
-\subsection{Serial crystallography and id29}
+\subsection{Serial crystallography on synchrotron sources (SSX)}
 %not sure we need subsections here
 Serial crystallography is a relatively new technique in structural biology. 
-With the term, we describe a family of techniques where multiple crystals (hundreds or thousands) are exsposed in a serial way to the X-ray beam to collect a complete dataset. 
+With the term, we describe a family of techniques where multiple crystals (hundreds or thousands) are exposed in a serial way to the X-ray beam to collect a complete dataset. 
 This is in contrast with traditional rotation crystallography, where a complete dataset is collected fro ma single crystal rotating around one axis. 
 The serial approach is particularly useful to try to overcome the limitations of radiation damage, in particular in very small crystals.
-The technique was first developed for X-ray free electron lasers (XFEL) %cite{chapman2011}
-but recently also adapted to be performed at synchrotron lightsources.
-A big limittion of this application is that the environment of MX beamlines is extremelly specialized towards rotation data collection. %explain more clearly if needed
+The technique was first developed for X-ray free electron lasers (XFEL) \cite{Chapman2011}
+but recently also adapted to be performed at synchrotron light sources.
+A big limitation of this application is that the environment of MX beamlines is extremely specialized towards rotation data collection. %explain more clearly if needed
 %\cite{Cheetah2014}
-The higher flux requierements for this method make it a clear candidate to be performed at 4th generation synchrotron sources, like the new ESRF-EBS update.
-The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to have a dedicated environment to perform SSX experiments.
-The beamline will feature a Jungfrau 4M detector, operating at 1KHz.
+The higher flux requirement for this method make it a clear candidate to be performed at 4\textsuperscript{th} generation synchrotron sources, like the new ESRF-EBS update \cite{EBS}.
+The Synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments.
+\subsection{Jungfrau4M detector}
+Unlike photon counting detectors like the Eiger detector \cite{Eiger}, the Jungfrau (developed at PSI) is an integrating detector which is not limited by the count rate, even under very intense flux as expected when recording Bragg-peaks \cite{jungfrau2016}.
+To cope with this very large number of photons, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision on the order of a fraction of a keV on the higher gain mode, a precision of the order one a photon in the intermediate level and the ability to cope with thousands of photons  per millisecond in the lower gain mode.
+Since the Jungfrau is an integrating detector, every pixel has has three dark-current level, called pedestal and three gain level (one for each gain level). 
+This large number of parameters per pixel combined with the gain-compression makes the preprocessing of raw signal challenging since the signal from a single pixel, initially stored on 16 bits of data needs to be represented using 32bits (as float or as integrer), doubling the storage size\cite{jungfrau_PSI}
+The ID29 beamline features a Jungfrau 4M detector, operating at 1kHz, pace imposed by a chopper and synchronized with the photon bunches from the ESRF.
 The data analysis and storage are thus anticipated to be extremely challenging. 
 \subsection{Requirements for online data processing}
 %again, this is not great, as it is not the text below. 
@@ -337,7 +342,7 @@ Shaded regions are never reconstructed properly and should be masked adequately 
 \subsection{Performances}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
 All those factors have been evaluated on a classical sample, Lysozyme, and rotational data were collected on an Eiger 4M detector (selected for its similarity in size and performances with the Jungfrau detector). 
-This reference dataset is the one made publicly available by Dectris to \cite{lysozym}. 
+This reference dataset is the one made publicly available by Dectris to \cite{lysozyme}. 
 
 \subsubsection{Compression ratio} 
 After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
@@ -440,7 +445,7 @@ the data and validating if those peaks corresponds to an actual crystal lattice 
 
 
 \subsection{Quality of the extracted peaks}
-The result of this algorithm is compared with the "peakfinder8" described in \cite{Cheetah2014} and interfaced in Python via OnDA \cite{onda}
+The result of this algorithm is compared with "peakfinder8" described in \citeasnoun{Cheetah2014} and interfaced in Python via OnDA \cite{onda}
 \subsection{Performances}
 
 \section{Conclusion}
