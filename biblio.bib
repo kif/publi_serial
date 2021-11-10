@@ -1556,16 +1556,49 @@ number = {1},
 pages = {014305},
 year = {2020},
 doi = {10.1063/1.5143480},
-
 URL = { 
-        https://doi.org/10.1063/1.5143480
-    
-},
-eprint = { 
-        https://doi.org/10.1063/1.5143480
-    
+        https://doi.org/10.1063/1.5143480},
+eprint = {  https://doi.org/10.1063/1.5143480   }
 }
-
+@article{CrystFEL,
+author = "White, Thomas A. and Kirian, Richard A. and Martin, Andrew V. and Aquila, Andrew and Nass, Karol and Barty, Anton and Chapman, Henry N.",
+title = "{{\it CrystFEL}: a software suite for snapshot serial crystallography}",
+journal = "Journal of Applied Crystallography",
+year = "2012",
+volume = "45",
+number = "2",
+pages = "335--341",
+month = "Apr",
+doi = {10.1107/S0021889812002312},
+url = {https://doi.org/10.1107/S0021889812002312},
+abstract = {In order to address the specific needs of the emerging technique of `serial femtosecond crystallography', in which structural information is obtained from small crystals illuminated by an X-ray free-electron laser, a new software suite has been created. The constituent programs deal with viewing, indexing, integrating, merging and evaluating the quality of the data, and also simulating patterns. The specific challenges addressed chiefly concern the indexing and integration of large numbers of diffraction patterns in an automated manner, and so the software is designed to be fast and to make use of multi-core hardware. Other constituent programs deal with the merging and scaling of large numbers of intensities from randomly oriented snapshot diffraction patterns. The suite uses a generalized representation of a detector to ease the use of more complicated geometries than those familiar in conventional crystallography. The suite is written in C with supporting Perl and shell scripts, and is available as source code under version 3 or later of the GNU General Public License.},
+keywords = {serial femtosecond crystallography, data processing, protein crystallography, CrystFEL, computer programs},
 }
-
-
+@article{onda,
+author = "Mariani, Valerio and Morgan, Andrew and Yoon, Chun Hong and Lane, Thomas J. and White, Thomas A. and O'Grady, Christopher and Kuhn, Manuela and Aplin, Steve and Koglin, Jason and Barty, Anton and Chapman, Henry N.",
+title = "{{\it OnDA}: online data analysis and feedback for serial X-ray imaging}",
+journal = "Journal of Applied Crystallography",
+year = "2016",
+volume = "49",
+number = "3",
+pages = "1073--1080",
+month = "Jun",
+doi = {10.1107/S1600576716007469},
+url = {https://doi.org/10.1107/S1600576716007469},
+abstract = {This article describes a free and open-source data analysis utility designed for fast online feedback during serial X-ray diffraction and scattering experiments: {\it OnDA} (online data analysis). Three complete real-time monitors for common types of serial X-ray imaging experiments are presented. These monitors are capable of providing the essential information required for quick decision making in the face of extreme rates of data collection. In addition, a set of modules, functions and algorithms that allow developers to modify the provided monitors or develop new ones are provided. The emphasis here is on simple, modular and scalable code that is based on open-source libraries and protocols. {\it OnDA} monitors have already proven to be invaluable tools in several experiments, especially for scoring and monitoring of diffraction data during serial crystallography experiments at both free-electron laser and synchrotron facilities. It is felt that in the future the kind of fast feedback that {\it OnDA} monitors provide will help researchers to deal with the expected very high throughput data flow at next-generation facilities such as the European X-ray free-electron laser.},
+keywords = {online data analysis, free-electron lasers, serial femtosecond crystallography, computer programs},
+}
+@article{nanopeakcell,
+author = "Coquelle, Nicolas and Brewster, Aaron S. and Kapp, Ulrike and Shilova, Anastasya and Weinhausen, Britta and Burghammer, Manfred and Colletier, Jacques-Philippe",
+title = "{Raster-scanning serial protein crystallography using micro- and nano-focused synchrotron beams}",
+journal = "Acta Crystallographica Section D",
+year = "2015",
+volume = "71",
+number = "5",
+pages = "1184--1196",
+month = "May",
+doi = {10.1107/S1399004715004514},
+url = {https://doi.org/10.1107/S1399004715004514},
+abstract = {High-resolution structural information was obtained from lysozyme microcrystals (20{$\mu$}m in the largest dimension) using raster-scanning serial protein crystallography on micro- and nano-focused beamlines at the ESRF. Data were collected at room temperature (RT) from crystals sandwiched between two silicon nitride wafers, thereby preventing their drying, while limiting background scattering and sample consumption. In order to identify crystal hits, new multi-processing and GUI-driven Python-based pre-analysis software was developed, named {\it NanoPeakCell}, that was able to read data from a variety of crystallographic image formats. Further data processing was carried out using {\it CrystFEL}, and the resultant structures were refined to 1.7{\AA} resolution. The data demonstrate the feasibility of RT raster-scanning serial micro- and nano-protein crystallography at synchrotrons and validate it as an alternative approach for the collection of high-resolution structural data from micro-sized crystals. Advantages of the proposed approach are its thriftiness, its handling-free nature, the reduced amount of sample required, the adjustable hit rate, the high indexing rate and the minimization of background scattering.},
+keywords = {serial crystallography, hit finding, raster scanning, background subtraction, radiation damage},
+}

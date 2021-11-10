@@ -45,12 +45,14 @@
 \cauthor[a]{Jérôme}{Kieffer}{jerome.kieffer@esrf.fr}{}
 \author[a]{Nicolas}{Coquelle}
 \author[a]{Samuel}{Debionne}
+\author[b]{Shibom}{Basu}
 \author[a]{Alejandro}{Homs}
 \author[a]{Gianluca}{Santoni}
 \author[a]{Götz}{Andrew}
 \author[a]{Daniele}{De Sanctis}
 
 \aff[a]{European Synchrotron Radiation Facility;71, avenue des Martyrs;CS 40220;38043 Grenoble Cedex 9 \country{France}}
+\aff[b]{EMBL Grenoble \country{France}}
 
      % Use \shortauthor to indicate an abbreviated author list for use in
      % running heads (you will need to uncomment it).
@@ -94,11 +96,25 @@ Abstract goes here.
      % and \subsubsection's as required.
 
 \section{Introduction}
-
+\subsection{Serial crystallography and id29}
+%not sure we need subsections here
+Serial crystallography is a relatively new technique in structural biology. 
+With the term, we describe a family of techniques where multiple crystals (hundreds or thousands) are exsposed in a serial way to the X-ray beam to collect a complete dataset. 
+This is in contrast with traditional rotation crystallography, where a complete dataset is collected fro ma single crystal rotating around one axis. 
+The serial approach is particularly useful to try to overcome the limitations of radiation damage, in particular in very small crystals.
+The technique was first developed for X-ray free electron lasers (XFEL) %cite{chapman2011}
+but recently also adapted to be performed at synchrotron lightsources.
+A big limittion of this application is that the environment of MX beamlines is extremelly specialized towards rotation data collection. %explain more clearly if needed
 %\cite{Cheetah2014}
-The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to \ldots
-In this setup samples will be carried in front of the beam and a Jungfrau 4M detector records 
-
+The higher flux requierements for this method make it a clear candidate to be performed at 4th generation synchrotron sources, like the new ESRF-EBS update.
+The Synchrotron serial crystallography beamline (ID29 at ESRF) has been built to have a dedicated environment to perform SSX experiments.
+The beamline will feature a Jungfrau 4M detector, operating at 1KHz.
+The data analysis and storage are thus anticipated to be extremely challenging. 
+\subsection{Requirements for online data processing}
+%again, this is not great, as it is not the text below. 
+Efficient processing of raw images is vital for macromolecular serial crystallography.
+Multiple challenges are present, in particular partiality and low completeness.
+To this reason, careful and precise location of Bragg peaks is vital.
 
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
@@ -137,7 +153,7 @@ Intensity can also be normalized by the incoming flux $I_0$, which is independen
 
 \subsubsection{Azimuthal averaging} 
 %This is my understanding: before you had a
-Historically, the azimutal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
+Historically, the azimuthal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
 The azimuthal transformation is a linear transformation, and it can thus be implemented as a  matrix multiplication between a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
 The compressed sparse row (CSR) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
@@ -293,7 +309,7 @@ This cut-off value $n$ controls the amount of data to store and provides also a 
 \end{center}
 \end{figure}
 
-For each stored pixels we need to record not only its intensity but also its position. 
+For each pixel which  we need to record not only its intensity but also its position. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
 
 The following section presents how the sparsification is performed on an example of Lyzozyme dataset obtained using rotational data-collection.
@@ -373,7 +389,7 @@ The detector outputs the data via 8x 10 Gbit/s network links and the storage is 
 
 The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
 an IBM AC922 using Power9 processors and Nvidia Tesla V100 GPU. 
-The code is and serial takes about 9 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
+The code is and serial takes about 4 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
 In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
 
 \subsubsection{Decompression speed:} 
@@ -393,7 +409,7 @@ with a cut-off of 2, those result should be almost unaffected, which is confirme
 \caption{Quality indicators after peak integration and averaging using XDS\cite{xds}}.
 \begin{tabular}{|c|c c c|c c c|} 
 \hline
-Indicator & \multicolumn{3}{c|}{Initial dataset}} & \multicolumn{3}{c|}{Lossy compressed dataset ($2\sigma$)} \\ 
+Indicator & \multicolumn{3}{c|}{Initial dataset} & \multicolumn{3}{c|}{Lossy compressed dataset ($2\sigma$)} \\ 
           & 2.91\AA & 2.06\AA & all & 2.91\AA & 2.06\AA & all \\
 \hline
 Completeness                                        & 98.8& 90.8 & 93.8\% & 99.8& 90.6 & 93.5\% \\ 
@@ -409,10 +425,24 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 
 
 \section{Application to serial crystallography}
-A classical way of pre-processing serial-crystallography data is to shrink the amount of data to be stored by selecting which frame actually deserve to be saved ("Veto" algorithm).
-The sigma clipping algorithm can be adapted to select pixels which   
-\subsection{Performance}
-     % comparison with cheetah
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving out which frame actually deserve to be saved ("Veto" algorithm).
+
+The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be peaks. 
+For this,  several additional checks are performed on the local neighborhood which is a small patch (typically 3x3 pixels):
+\begin{itemize}
+\item The considered pixel is the maximum of the local neighborhood.
+\item The number of pixels in the local neighborhood satisfying the intensity condition ($|I-\bar{I} |> n \sigma_{I}$)  is above a given minimum.
+\end{itemize}
+
+For each peak, the pixel coordinate, the precise centroïd, the sum of the data and its propagated deviation are recorded and reported. 
+Those results can be subsequently injected into CrystFEL \cite{CrystFEL} which is performing the indexing of
+the data and validating if those peaks corresponds to an actual crystal lattice \cite{nanopeakcell}.
+
+
+\subsection{Quality of the extracted peaks}
+The result of this algorithm is compared with the "peakfinder8" described in \cite{Cheetah2014} and interfaced in Python via OnDA \cite{onda}
+\subsection{Performances}
+
 \section{Conclusion}
 drawback: textured background
 
