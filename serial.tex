@@ -99,108 +99,105 @@ Abstract goes here.
 \subsection{Serial crystallography on synchrotron sources (SSX)}
 %not sure we need subsections here
 Serial crystallography is a relatively new technique in structural biology. 
-With the term, we describe a family of techniques where multiple crystals (hundreds or thousands) are exposed in a serial way to the X-ray beam to collect a complete dataset. 
-This is in contrast with traditional rotation crystallography, where a complete dataset is collected fro ma single crystal rotating around one axis. 
+It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial way to the X-ray beam to collect a complete dataset. 
+This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
 The serial approach is particularly useful to try to overcome the limitations of radiation damage, in particular in very small crystals.
 The technique was first developed for X-ray free electron lasers (XFEL) \cite{Chapman2011}
 but recently also adapted to be performed at synchrotron light sources.
-A big limitation of this application is that the environment of MX beamlines is extremely specialized towards rotation data collection. %explain more clearly if needed
-%\cite{Cheetah2014}
-The higher flux requirement for this method make it a clear candidate to be performed at 4\textsuperscript{th} generation synchrotron sources, like the new ESRF-EBS update \cite{EBS}.
-The Synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments.
+Macromolecular crystallography beamlines (MX) have been extremely specialized towards rotational data collection and are thus not well addapted to SSX.
+The higher flux requirement for SSX make it a clear candidate to be performed at 4\textsuperscript{th} generation synchrotron sources, like the new ESRF-EBS update \cite{EBS}.
+The Synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (thanks to multi-layer optics), a high-speed chopper, several sample delivery methods and a fast detector.
 \subsection{Jungfrau4M detector}
 Unlike photon counting detectors like the Eiger detector \cite{Eiger}, the Jungfrau (developed at PSI) is an integrating detector which is not limited by the count rate, even under very intense flux as expected when recording Bragg-peaks \cite{jungfrau2016}.
-To cope with this very large number of photons, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision on the order of a fraction of a keV on the higher gain mode, a precision of the order one a photon in the intermediate level and the ability to cope with thousands of photons  per millisecond in the lower gain mode.
+To cope with this very large number of photons, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision on the order of a fraction of a keV on the higher gain mode, a precision of the order one a photon in the intermediate level and the ability to cope with thousands of photons per millisecond in the lower gain mode.
 Since the Jungfrau is an integrating detector, every pixel has has three dark-current level, called pedestal and three gain level (one for each gain level). 
-This large number of parameters per pixel combined with the gain-compression makes the preprocessing of raw signal challenging since the signal from a single pixel, initially stored on 16 bits of data needs to be represented using 32bits (as float or as integrer), doubling the storage size\cite{jungfrau_PSI}
+This large number of parameters per pixel combined with the gain-compression makes the preprocessing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the storage size \cite{jungfrau_PSI}.
 The ID29 beamline features a Jungfrau 4M detector, operating at 1kHz, pace imposed by a chopper and synchronized with the photon bunches from the ESRF.
 The data analysis and storage are thus anticipated to be extremely challenging. 
 \subsection{Requirements for online data processing}
 %again, this is not great, as it is not the text below. 
-Efficient processing of raw images is vital for macromolecular serial crystallography.
-Multiple challenges are present, in particular partiality and low completeness.
+Efficient processing of raw images is vital for SSX.
+Multiple challenges are present, in particular partiality and low completeness of data collected for each individual crystal.
 To this reason, careful and precise location of Bragg peaks is vital.
 
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
 
 The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
-For this the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
+For this, the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
+Unlike X-FEL, synchrotron X-ray beam show little bunch to bunch variability and with the the beam being well characterized, those anisotropic correction can be easily taken into account.
 
-The initial implementation in pyFAI \cite{pdj2013} relied on a 2D radial transform followed by a median filter in the azimuthal dimension 
-to separate amorphous scattering from crystalline scattering.
+The initial implementation in pyFAI \cite{pdj2013} used to rely on a 2D polar transform followed by a median filter in the azimuthal dimension 
+to separate amorphous scattering from single crystal scattering.
 Despite this method has been successfully used for large dataset analysis \cite{brocades}, it presents several major drawbacks:
-* The 2D averaging mixes the signal of several pixels and blurs the signal. 
-* Pixel-splitting is needed to leverage the moiré effect in the 2D averaging, but this increases further the blurring. 
-* The 1D curve obtained after the application of the median filter shows sharp jumps from one azimuthal bin to its neighbour.
-* Median filter is computationally heavy since it requires to sort out every azimuthal bin.
+\begin{itemize}
+\item The 2D averaging mixes the signal of several pixels and blurs the signal. 
+\item Pixel-splitting is needed to leverage the Moiré effect in the 2D averaging, but this increases further the blurring. 
+\item The 1D curve obtained after the application of the median filter shows sharp jumps from one azimuthal bin to its neighbour.
+\item Median filter is computationally heavy since it requires to sort out every azimuthal bin.
+\end{itemize}
 
-The coming sections present an efficient way to perform the azimuthal averaging and the associated variance propagation, and its application to the statistical analysis and extraction of background from a diffraction image. 
+The coming sections present an efficient way to perform the azimuthal averaging (including the associated variance propagation),  its application to the statistical analysis and extraction of background from a diffraction image. 
 
 \subsection{Efficient azimuthal averaging and uncertainties evaluation}
 
-\subsubsection{Preprocessing}
-The first step of the analysis consists in applying a pixel-wise correction for dark current and several normalization corrections\cite{pyfai_2020} which is described in Equation\ref{norm}:
+\subsubsection{Preprocessing:}
+The first step of the analysis consists in applying a pixel-wise correction for dark current and several normalization corrections \cite{pyfai_2020}:
 \begin{equation}
 \label{norm}
 I_{cor} = \frac{signal}{norm}  = \frac{I_{raw} - I_{dark}}{F \cdot
 \Omega \cdot P \cdot A \cdot I_0} 
 \end{equation}
-Here the numerator ($signal$ hereafter) is the subtraction of the dark current $I_{dark}$ from the the detector's raw signal $I_{raw}$.
-The denominator (hereafter $norm$) is a normalization factor composed of the product of  $F$:  a factor accounting for the flat-field correction, $\Omega$: the solid
-angle subtended by a given pixel, $P$: the polarisation correction term and
-$A$: the detector's apparent efficiency due to the incidence angle of the
-photon on the detector plane (for integrating detectors, high energy photons with
-larger incidence angle see larger sensor thickness, and thus have higher
-detection probability).
-Intensity can also be normalized by the incoming flux $I_0$, which is independent of the pixel position.
-%Normalizing By I0 should not change much though, am I right?
+In  equation \ref{norm}, the numerator (refereed as $signal$ hereafter) is the subtraction of the dark current $I_{dark}$ from the the detector's raw signal $I_{raw}$.
+The denominator (hereafter $norm$) is a normalization factor composed of the product of  $F$:  a factor accounting for the flat-field correction, $\Omega$: the solid angle subtended by a given pixel, $P$: the polarisation correction term and $A$: the detector's apparent efficiency due to the incidence angle of the photon on the detector plane (for integrating detectors, high energy photons with larger incidence angle see larger sensor thickness, and thus have higher detection probability).
+Intensity is often also be normalized by the incoming flux $I_0$, but since it is independent from the pixel position this correction has no influence.
 
-\subsubsection{Azimuthal averaging} 
-%This is my understanding: before you had a
+\subsubsection{Azimuthal averaging:} 
+
 Historically, the azimuthal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
-The azimuthal transformation is a linear transformation, and it can thus be implemented as a  matrix multiplication between a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
+The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
 The compressed sparse row (CSR) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
 In the case where pixel splitting is deactivated those coefficients  ($c_{i,r}$) are always one (and zero elsewhere) since each pixel contribute to a single bin.
 The sparse matrix multiplication can be used to sum efficiently values for all pixels belonging to the same bin.
-The summed signal divided by the summed normalization provides the intensity averaged over all pixels falling in the bin at the distance $r$ from the center,as described by equation \ref{avg}: 
+The summed signal divided by the summed normalization provides the intensity averaged over all pixels falling in the bin at the distance $r$ from the center, as formalized in equation \ref{avg}: 
 \begin{equation}
 \label{avg}
 <I>_{r} = \frac{\sum\limits_{i \in bin_r} c_{i,r} \cdot signal_i}
                         {\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i} 
 \end{equation}  
 
-\subsubsection{Uncertainty evaluation from Poisson law}
-Photon counting detectors, like Eiger detectors, suffer from several uncertainties, among which the most important one is the counting statistics (often referred as Poisson law),
-stating that the lower limit for the variance for a pixel is the number of events counted.
-Other sources of noise, like the dark current noise,  superimpose quadratically to the Poisson noise as presented in equation \ref{poisson}:     
+\subsubsection{Uncertainty evaluation from Poisson law:}
+Photon counting detectors, like Eiger detectors, suffer from hardly any error beside the counting uncertainty which is often referred as Poisson statistics.
+This statistical law states that the variance for a pixel is the number of events counted.
+Other sources of noise, like the dark current noise in the case of an integrating detector,  superimpose quadratically to the Poisson noise for integrating detectors, as presented in equation \ref{poisson}:     
 \begin{equation}
 \label{poisson}
-var(I) = (\sigma(I))^{2} = I_{raw} + (\sigma_{dark})^{2}  
+var_I = (\sigma_I)^{2} = I_{raw} + (\sigma_{dark})^{2}  
 \end{equation}
 
-During the propagation of the variance, during the azimuthal integration, the coefficients of the sparse matrix needs to be squared at the numerator equation \ref{varianceP} to have uncertainties $\sigma$ proportional to the fraction of the pixel considered.
+During the azimuthal integration, the coefficients of the sparse matrix needs to be squared at the numerator when propagating the variance (equation \ref{varianceP}) to have uncertainties $\sigma$ proportional to the fraction of the pixel considered.
 \begin{equation}
 \label{varianceP}
-(\sigma_{r}(I))^2 = \frac{\sum\limits_{i \in bin_r} c_{i,r}^2 \cdot var_i}
+(\sigma_{r}(I))^2 = \frac{\sum\limits_{i \in bin_r} c_{i,r}^2 \cdot \sigma_i^2}
                   {\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i} 
 \end{equation}
 One should distinguish the \textit{uncertainty of the mean} (sometimes referred are standard error of the mean or $sem$), 
-which describes the precision with which the mean is known (and described in \cite{pyfai_2020}),
-from the \textit{uncertainty of the pixel value} (often referred are standard deviation, $std$). 
-Those two value differ only by square root of the number of measurements: $sem = std/\sqrt{norm}$.
+which describes the precision with which the mean is known (and described in \citeasnoun{pyfai_2020}),
+from the \textit{uncertainty of the pixel value} (often referred as standard deviation, $std$). 
+Those two value differ only by square root of the number of measurements, here: $sem = std/\sqrt{norm}$.
 Thus, the more data point are collected, the more precisely the mean value is known.
 Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used in this document.  
 
-\subsubsection{Uncertainty evaluation from the variance in a bin.}
+\subsubsection{Uncertainty evaluation from the variance in a bin:}
 
-Unlike photon counting detectors, most detectors are not following the Poisson law and the establishment of a formula $\sigma^2 = f(I)$ is not simple if possible at all. 
+Unlike photon counting detectors, most detectors are not following the Poisson law and the establishment of a formula $\sigma^2 = f(I)$ is not simple, if possible at all. 
 In the case of the Jungfrau detector considered for the ESRF-ID29 beamline, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
-A generic approach is taken here in measuring the variance in every single bin.
+A generic approach is proposed here to measure the variance in every single bin.
 
-When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities could be used to estimate the uncertainty.
-Variance (and standard deviation) are usually obtained in a two steps procedure: one pass to calculate the average value (Eq\ref{avg})and a second to calculate the deviation to the average (Eq\ref{varA}. 
+When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities could be used to estimate the uncertainty. 
+This approach is of course limited when considering Bragg-peaks, but it provides an upper bound for the uncertainty.
+Variance (and standard deviation) are usually obtained in a two steps procedure: one pass to calculate the average value (equation \ref{avg}) and a second to calculate the deviation to the average (equation \ref{varA}). 
 This double pass approach can be implemented using sparse matrix multiplication. It requires the access to each pixel twice and extra storage space, but it is very stable numerically.
 \begin{equation}
 \label{varA}
@@ -208,20 +205,21 @@ This double pass approach can be implemented using sparse matrix multiplication.
                          {\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i}  ?=  \sum\limits_{i \in bin_r} c_{i,r} \cdot  (\frac{signal_i}{norm_i}-<I>_r)^2
 \end{equation}
 
-
- 
-Single pass implementations of variance calculation are faster since they access pixels only once and offer the ability to perform parallel reductions, i.e. work with blocks of pixels.
+Single pass implementations of variance calculation are faster since they access pixels only once and offer the ability to perform parallel reductions \cite{Blelloch}, i.e. work with blocks of pixels .
 \citeasnoun{variance2018} presents a complete review, from which we adapt to the formalism of crystallography some key equations.
-For example the weight for a pixel is $\omega_i = c_i \cdot normalization_i$
+For example the weight for a pixel is $\omega_i = c_i \cdot norm_i$
 If $P$ is a partition of the ensemble of pixels falling into a given azimuthal bin, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  
-be the weight sum, the weighted sum of $V$ and the weighted sum of deviation squared over the partition $P$: 
+be the sum of weights (Eq \ref{omega}), the weighted sum of $V$ (Eq \ref{Vp}) and the weighted sum of deviation squared (Eq \ref{VVp}) over the partition $P$: 
 \begin{equation}
+\label{omega}
 \Omega_{P} = \sum\limits_{i \in P} \omega_i = \sum\limits_{i \in P} c_i \cdot norm_i 
 \end{equation}
 \begin{equation}
+\label{Vp}
 V_{P} = \sum\limits_{i \in P} \omega_i \cdot v_i =  \sum\limits_{i \in P} c_i \cdot signal_i
 \end{equation}
 \begin{equation}
+\label{VVp}
 VV_{p} = \sum\limits_{i \in P} \omega_i \cdot (v_i - V_{P}/\Omega_{P})^2 
 \end{equation}
 
@@ -253,12 +251,12 @@ The numerical stability issue is addressed by using double-precision arithmetic 
 \subsection{Histogram intensity }
 
 The figure \ref{fig1}a presents the diffraction from a single crystal of insulin and several curves obtained from azimuthal integration: 
-\ref{fig1}b is the azimuthally integrated signal (blue curve). Bragg peaks are seen as spikes on top of the background.
+\ref{fig1}b is the azimuthally integrated signal (blue curve). Bragg peaks are seen as spikes on top of a smooth background.
 The plot \ref{fig1}c presents the uncertainties measured according to the Poisson law (orange curve, valid since the Pilatus is a photon counting detector) 
-or the deviation in the ring (blue curve), much larger value since Bragg peaks contribute a lot to the deviation despite they represent few pixels.         
-In the plot \ref{fig1}d are presented histogram of pixel intensity for  pixel laying at 80mm and 160mm from the beam center. 
-Each of those histograms is composed of a bell-shaped distribution, centered on the average value with negative outliers tagged with the pixel value -1
-(this is specific to the Pilatus detector), and few positive outliers which are usually Bragg peaks.   
+or the deviation in the ring (blue curve), much larger value since Bragg peaks contribute a lot to the deviation despite they represent few pixels.
+This highlights the sensitivity of the mean/std to ouliers.
+In the plot \ref{fig1}d are presented histogram of pixel intensity for pixels laying at 80mm and 160mm from the beam center. 
+Each of those histograms is composed of a bell-shaped distribution, centered on the average value with negative outliers tagged with the pixel value -1 (this is specific to the Pilatus detector), and few positive outliers which are usually Bragg peaks.   
 Those histograms in figure \ref{fig1}d have been fitted with a Gaussian curve and both the center ($\mu$) and the width ($\sigma$) of the curve match 
 roughly with the average (in \ref{fig1}b) and uncertainties (in \ref{fig1}c).  
 \begin{figure}
@@ -279,18 +277,18 @@ The distribution is recalculated  after discarding pixels for which intensity di
 |I - <I>| > n \cdot \sigma(I)
 \end{equation}
 The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c are the uncertainties calculated after this clipping. 
- After clipping the average and uncertainties curves have lost most of their spikes, which means that Bragg peaks and shadowed pixel were discarded.
+After clipping, the average and uncertainties curves have lost most of their spikes, which means that Bragg peaks and shadowed pixel were discarded.
  
 \subsection{Sigma-clipping}
-The \textit{sigma-clipping} algorithm consists in iteratively applying the outlier rejection previously described in order to enforce the background distribution to follow a normal law.
-There are two parameters to this algorithm: the number of iterations of clipping and the rejection cut-off.
+The \textit{sigma-clipping} algorithm consists in applying the outlier rejection previously described several times, in order to enforce the background distribution to follow a normal law.
+There are two parameters to this algorithm: the number of iterations and the rejection cut-off.
 %I merged number of iterations and sigma clipping  as closely connected.
 Despite the execution time is proportional to the number of iteration of sigma-clipping, iterations should continue until no more outliers are found and the 
 background distribution actually matches a Gaussian distribution. 
-Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not an issue for the execution time and the number of actual iteration is usually few (3 is commonly observed).       
+Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not really an issue for the execution time and the number of actual iteration is usually few (3 is commonly observed).       
 
-\subsubsection{Clipping threshold:}
-Clipping threshold can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only a single pixel in a ring with a signal already following a normal law. 
+\subsubsection{Clipping threshold}
+can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only a single pixel in a ring with a signal already following a normal law. 
 Thus, the threshold value is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq\ref{chauvenet}), which can reach several thousands and shrinks with iterations.
 Typically the numerical value for this cut-off varies from 2 to 4.   
 \begin{equation}
@@ -305,7 +303,7 @@ Diffraction images from a single macromolecular crystal exhibit usually an isotr
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
-This cut-off value $n$ controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded $n=1$,  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
+This cut-off value $n$ controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded with $n=1$;  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
 \begin{figure}
 \label{distribution}
 \begin{center}
@@ -314,29 +312,30 @@ This cut-off value $n$ controls the amount of data to store and provides also a 
 \end{center}
 \end{figure}
 
-For each pixel which  we need to record not only its intensity but also its position. 
+The storage space is much larger than just the pixel intensity since one needs to store as well also its position. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
 
-The following section presents how the sparsification is performed on an example of Lyzozyme dataset obtained using rotational data-collection.
+The following section presents how the sparsification is performed on an example of Lysozyme dataset obtained using rotational data-collection.
 Those data are then densified again to regenerate the data and processed in the standard XDS reduction tool \cite{xds}.
 Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
 
 \subsection{Sparsification}
 
-The sigma-clipping algorithm was originally written for real-time sparsification of synchrotron serial crystallography data and its integration into the LIMA2 \cite{lima2} detector control system for the Jungfrau 4M detector used at ESRF ID29 is described in \cite{sri2021}.
+The sigma-clipping algorithm was originally written for real-time sparsification of single crystal diffraction data and its integration into the LIMA2 \cite{lima} detector control system for the Jungfrau 4M detector used at ESRF ID29 is described in \cite{sri2021}.
 The real-time constrain imposed to develop code running on GPU since those devices are several times
 faster than equivalently priced processors.
 All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package.
 A command line tool called `sparsify-Bragg' is available for off-line testing.
 
-All the pixel coordinates and intensities are finally stored in a HDF5 \cite{hdf5} container following the nexus \cite{nexus} convention, together with a snippet of Python code explaining how to rebuild the dataset.
-All sparse datasets (averaged and uncertainties curves, pixel corrdinates, ...) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
+All the pixel coordinates and intensities are stored in a HDF5 container \cite{hdf5} following the nexus \cite{nexus} convention, together with a snippet of Python code explaining how to rebuild the dataset.
+All sparse datasets (averaged and uncertainties curves, pixel coordinates, ...) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
 
 \subsection{Densification}
-Since no crystallographic software package is aware of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
-The software constrains for this densification code are very different from the one for sparisfication. For this reason `densify-Bragg' was optimized to run on multicore CPU. 
-The only important options are, beside the file-format and name, whether the background noise has to be reconstructed or not. 
-Some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result with an almost constant background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background restored. 
+Since no crystallographic software package is aware (yet) of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
+The software constrains for this densification code are very different from the one for sparisfication since this code can be used by the final users.
+For this reason `densify-Bragg' was optimized to run on multicore CPU.
+The only important options are, beside the file-format and file-name, whether the background noise has to be reconstructed or not. 
+Some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result without noisy background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background restored. 
 Shaded regions are never reconstructed properly and should be masked adequately in the reduction software.
 
 \subsection{Performances}
@@ -344,7 +343,7 @@ The performances for a lossy compression algorithm are to be evaluated along man
 All those factors have been evaluated on a classical sample, Lysozyme, and rotational data were collected on an Eiger 4M detector (selected for its similarity in size and performances with the Jungfrau detector). 
 This reference dataset is the one made publicly available by Dectris to \cite{lysozyme}. 
 
-\subsubsection{Compression ratio} 
+\subsubsection{Compression ratio:} 
 After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
 For conformance with the state of the art, the reference the dataset size was re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
