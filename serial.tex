@@ -125,7 +125,7 @@ To this reason, careful and precise location of Bragg peaks is vital.
 
 The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
 For this, the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
-Unlike X-FEL, synchrotron X-ray beam show little bunch to bunch variability and with the the beam being well characterized, those anisotropic correction can be easily taken into account.
+Unlike X-FEL, synchrotron X-ray beam show little bunch to bunch variability and with the beam being well characterized, those anisotropic correction can be easily taken into account.
 
 The initial implementation in pyFAI \cite{pdj2013} used to rely on a 2D polar transform followed by a median filter in the azimuthal dimension 
 to separate amorphous scattering from single crystal scattering.
@@ -150,13 +150,14 @@ I_{cor} = \frac{signal}{norm}  = \frac{I_{raw} - I_{dark}}{F \cdot
 \end{equation}
 In  equation \ref{norm}, the numerator (refereed as $signal$ hereafter) is the subtraction of the dark current $I_{dark}$ from the the detector's raw signal $I_{raw}$.
 The denominator (hereafter $norm$) is a normalization factor composed of the product of  $F$:  a factor accounting for the flat-field correction, $\Omega$: the solid angle subtended by a given pixel, $P$: the polarisation correction term and $A$: the detector's apparent efficiency due to the incidence angle of the photon on the detector plane (for integrating detectors, high energy photons with larger incidence angle see larger sensor thickness, and thus have higher detection probability).
-Intensity is often also be normalized by the incoming flux $I_0$, but since it is independent from the pixel position this correction has no influence.
+Intensity is also normalized by the incoming flux $I_0$, but since it is independent from the pixel position this correction has no influence.
 
 \subsubsection{Azimuthal averaging:} 
 
-Historically, the azimuthal averaging was implemented using histograms. Since the the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
+Historically, the azimuthal averaging was implemented using histograms. 
+Since the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal-bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
 The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector which is simply the flattened view of the diffraction image. 
-The compressed sparse row (CSR) matrix representation is preferred since it is very efficient to perform dot products with dense vectors.
+The compressed sparse row (CSR) matrix representation is preferred for its efficiency in performing dot products with dense vectors.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
 In the case where pixel splitting is deactivated those coefficients  ($c_{i,r}$) are always one (and zero elsewhere) since each pixel contribute to a single bin.
 The sparse matrix multiplication can be used to sum efficiently values for all pixels belonging to the same bin.
@@ -341,11 +342,11 @@ Shaded regions are never reconstructed properly and should be masked adequately 
 \subsection{Performances}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
 All those factors have been evaluated on a classical sample, Lysozyme, and rotational data were collected on an Eiger 4M detector (selected for its similarity in size and performances with the Jungfrau detector). 
-This reference dataset is the one made publicly available by Dectris to \cite{lysozyme}. 
+This reference dataset is the one made publicly available by Dectris TODO \cite{lysozyme}. 
 
 \subsubsection{Compression ratio:} 
 After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
-For conformance with the state of the art, the reference the dataset size was re-compressed using the bitshuffle-LZ4 \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
+For conformance with the state of the art, the reference dataset was re-compressed using the bitshuffle-LZ4 algorithm \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
 The maximum theoretical compression ratio for $2\sigma$ is 22x (figure \ref{distribution}, neglecting the storage of the background data and effects of the lossless compression).
 To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack
@@ -392,8 +393,8 @@ The detector outputs the data via 8x 10 Gbit/s network links and the storage is 
 %\end{verbatim}
 
 The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
-an IBM AC922 using Power9 processors and Nvidia Tesla V100 GPU. 
-The code is and serial takes about 4 ms to process one image and uses a single CPU-core and about 25\% of the GPU. 
+an IBM AC922 using two Power9 processors and two (to four) Nvidia Tesla V100 GPU. 
+The sequential execution of the code on the GPU takes about 4 ms to process a one image and uses a single CPU-core and a quarter of a GPU. 
 In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
 
 \subsubsection{Decompression speed:} 
@@ -429,10 +430,10 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 
 
 \section{Application to serial crystallography}
-A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving out which frame actually deserve to be saved ("Veto" algorithm).
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving out empty frames, actually keeping frame which deserve to be saved ("Veto" algorithm).
 
 The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be peaks. 
-For this,  several additional checks are performed on the local neighborhood which is a small patch (typically 3x3 pixels):
+For this,  several additional checks are performed on the local neighborhood which is a small patch (typically 3x3 or 5x5 pixels):
 \begin{itemize}
 \item The considered pixel is the maximum of the local neighborhood.
 \item The number of pixels in the local neighborhood satisfying the intensity condition ($|I-\bar{I} |> n \sigma_{I}$)  is above a given minimum.
@@ -440,7 +441,7 @@ For this,  several additional checks are performed on the local neighborhood whi
 
 For each peak, the pixel coordinate, the precise centroïd, the sum of the data and its propagated deviation are recorded and reported. 
 Those results can be subsequently injected into CrystFEL \cite{CrystFEL} which is performing the indexing of
-the data and validating if those peaks corresponds to an actual crystal lattice \cite{nanopeakcell}.
+the data and validating if those peaks corresponds to an realistic crystal lattice \cite{nanopeakcell}.
 
 
 \subsection{Quality of the extracted peaks}
@@ -461,7 +462,7 @@ TODO: indexing ratio in Crystfel
 %JK: I am probably not using properly peakfinder8 ... any help welcome on that
 \subsection{Performances}
 The runtime fro pyFAI is 9ms while it takes 150ms for Cheetah ... but pyFAI performs most calculation on a GPU which may not be generally available.
-Nota: The sigma-clipping is now available on CPU in pyFAI, but neither the compression nor the peakfinder is ported yet.
+%Nota: The sigma-clipping is now available on CPU in pyFAI, but neither the compression nor the peakfinder is ported yet.
 
 \section{Conclusion}
 drawback: textured background
