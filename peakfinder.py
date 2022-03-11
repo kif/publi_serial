@@ -13,6 +13,7 @@ import scipy.optimize
 from pyFAI.opencl.peak_finder import OCL_PeakFinder
 import gc
 import shutil
+from pyFAI.ext.bilinear import Bilinear
 
 
 #Installation of a local copy of the Cython-bound peakfinder8
@@ -51,6 +52,7 @@ max_num_peaks = 10000
 polarization_factor = 0.90
 
 ai = pyFAI.load(geo)
+print(ai)
 fimg = fabio.open(img)
 msk = fimg.data<=0
 fixed = fimg.data.copy()
@@ -62,7 +64,7 @@ fig,ax = subplots( figsize=(12,8))
 ln = LogNorm(1, fimg.data.max())
 mimg = ax.imshow(fixed, norm=ln, interpolation="nearest", cmap="magma")#bicubic")
 
-ai.integrate1d(fimg.data, npt, unit=unit, method=method)
+int1d = ai.integrate1d(fimg.data, npt, unit=unit, method=method)
 m = list(ai.engines.keys())[0]
 integrator = ai.engines[m].engine
 r2d = ai._cached_array[unit.name.split("_")[0] + "_center"]
@@ -132,4 +134,23 @@ ax.legend()
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
 fig.show()
+
+print("# Histogram")
+fig,ax = subplots( figsize=(12,8))
+
+interp = Bilinear(r2d)
+r_ch = [interp(i) for i in zip(res1[1], res1[0])]
+r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
+ax.hist(r_py, 45, range=(0, 44), label="pyFAI", alpha=0.8)
+ax.hist(r_ch, 45, range=(0, 44), label="Cheetah", alpha=0.8)
+ax.set_xlabel(int1d.unit.label)
+ax.set_ylabel("Number of Bragg peaks (found in ring)")
+ax.legend()
+
+fig.savefig("peak_per_ring.eps")
+fig.savefig("peak_per_ring.png")
+fig.show()
+
+
+
 input("finish")
