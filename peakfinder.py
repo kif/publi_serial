@@ -1,6 +1,7 @@
 import glob
 import sys
 import os
+import posixpath
 import time
 import numpy
 from matplotlib.pyplot import subplots, colorbar
@@ -11,32 +12,41 @@ from matplotlib.colors import LogNorm
 import scipy.optimize
 from pyFAI.opencl.peak_finder import OCL_PeakFinder
 import gc
+import shutil
 
-if not os.path.isdir("peakfinder8"):
-    os.system("git clone https://github.com/tjlane/peakfinder8")
-    cwd = os.getcwd()
-    os.chdir("peakfinder8")
-    os.system(sys.executable +" setup.py build")
-    d = glob.glob("build/lib*")[0]
-    print(d)
-    sys.path.append(os.path.join(os.getcwd(), d, "ssc"))
-    os.chdir(cwd)
 
-import peakfinder8_extension
+#Installation of a local copy of the Cython-bound peakfinder8
+targeturl = "https://github.com/kif/peakfinder8"
+targetdir = posixpath.split(targeturl)[-1]
+if os.path.exists(targetdir):
+    shutil.rmtree(targetdir, ignore_errors=True)
+pwd = os.getcwd()
+try:
+    os.system("git clone " + targeturl)
+    os.chdir(targetdir)
+    os.system(sys.executable + " setup.py build")
+except exception as err:
+    print(err)
+finally:
+    os.chdir(pwd)
+sys.path.append(pwd+"/"+glob.glob(f"{targetdir}/build/lib*")[0])
+
+from ssc.peakfinder8_extension import peakfinder_8
 
 img = UtilsTest.getimage("Pilatus6M.cbf")
 geo =  UtilsTest.getimage("Pilatus6M.poni")
 method = ("no", "csr", "cython")
-unit = pyFAI.units.to_unit("r_mm")
+unit = pyFAI.units.to_unit("q_nm^-1")
 dummy = -2
 ddummy=1.5
 npt = 500
-repeat = 100
-SNR=4
-noise=2
-nb = 5
-him = 2
-hiM = 100
+repeat = 10
+SNR=3
+noise=1
+nb = 2
+him = 5
+hiM = 999
+max_num_peaks = 10000
 
 ai = pyFAI.load(geo)
 fimg = fabio.open(img)
@@ -47,7 +57,7 @@ fixed[msk] = 1
 fig,ax = subplots( figsize=(12,8))
 #fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
-mimg = ax.imshow(fixed, norm=ln, interpolation="bicubic")
+mimg = ax.imshow(fixed, norm=ln, interpolation="nearest", cmap="magma")#bicubic")
 
 ai.integrate1d(fimg.data, npt, unit=unit, method=method)
 m = list(ai.engines.keys())[0]
@@ -56,37 +66,37 @@ r2d = ai._cached_array[unit.name.split("_")[0] + "_center"]
 r2dp = (r2d/ai.detector.pixel1).astype(numpy.float32)
 data = fimg.data.astype(numpy.float32)
 pmsk = (1-msk).astype(numpy.int8)
-res1 = peakfinder8_extension.peakfinder_8(max_num_peaks=1000000,
-                                          data=data,
-                                          mask=pmsk,
-                                          pix_r=r2dp,
-                                          asic_nx=ai.detector.shape[1],
-                                          asic_ny=ai.detector.shape[0],
-                                          nasics_x=1,
-                                          nasics_y=1,
-                                          adc_thresh=noise,
-                                          hitfinder_min_snr=SNR,
-                                          hitfinder_min_pix_count=him,
-                                          hitfinder_max_pix_count=hiM,
-                                          hitfinder_local_bg_radius=nb)
+res1 = peakfinder_8(max_num_peaks=max_num_peaks,
+                    data=data,
+                    mask=pmsk,
+                    pix_r=r2dp,
+                    asic_nx=ai.detector.shape[1],
+                    asic_ny=ai.detector.shape[0],
+                    nasics_x=1,
+                    nasics_y=1,
+                    adc_thresh=noise,
+                    hitfinder_min_snr=SNR,
+                    hitfinder_min_pix_count=him,
+                    hitfinder_max_pix_count=hiM,
+                    hitfinder_local_bg_radius=nb)
 
 print(f"Len of Cheetah result: {len(res1[0])}")
 gc.disable()
 t0 = time.perf_counter()
 for i in range(repeat):
-    res1 = peakfinder8_extension.peakfinder_8(max_num_peaks=1000000,
-                                          data=data,
-                                          mask=pmsk,
-                                          pix_r=r2dp,
-                                          asic_nx=ai.detector.shape[1],
-                                          asic_ny=ai.detector.shape[0],
-                                          nasics_x=1,
-                                          nasics_y=1,
-                                          adc_thresh=noise,
-                                          hitfinder_min_snr=SNR,
-                                          hitfinder_min_pix_count=him,
-                                          hitfinder_max_pix_count=hiM,
-                                          hitfinder_local_bg_radius=nb)
+ res1 = peakfinder_8(max_num_peaks=max_num_peaks,
+                    data=data,
+                    mask=pmsk,
+                    pix_r=r2dp,
+                    asic_nx=ai.detector.shape[1],
+                    asic_ny=ai.detector.shape[0],
+                    nasics_x=1,
+                    nasics_y=1,
+                    adc_thresh=noise,
+                    hitfinder_min_snr=SNR,
+                    hitfinder_min_pix_count=him,
+                    hitfinder_max_pix_count=hiM,
+                    hitfinder_local_bg_radius=nb)
 t1 =  time.perf_counter()
 gc.enable()
 print(f"Execution_time for Cheetah: {1000*(t1-t0)/repeat:.3f}ms")
@@ -100,19 +110,19 @@ pf = OCL_PeakFinder(integrator.lut,
                         mask=msk.astype("int8"),
                         profile=True)
 print(pf)
-res = pf.peakfinder8(fimg.data, dummy=dummy, delta_dummy=ddummy, error_model="azimuthal", cutoff_clip=0, cycle=5, noise=noise, cutoff_pick=SNR, patch_size=3, connected=him)
+res = pf.peakfinder8(fimg.data, dummy=dummy, delta_dummy=ddummy, error_model="azimuthal", cutoff_clip=0, cycle=3, noise=noise, cutoff_pick=SNR, patch_size=2*nb+1, connected=him)
 print(f"Len of pyFAI result: {len(res)}")
 gc.disable()
 t0 = time.perf_counter()
 for i in range(repeat):
-    res = pf.peakfinder8(fimg.data, dummy=dummy, delta_dummy=ddummy, error_model="azimuthal", cutoff_clip=0, cycle=5, noise=noise, cutoff_pick=SNR, patch_size=3, connected=him)
+    res = pf.peakfinder8(fimg.data, dummy=dummy, delta_dummy=ddummy, error_model="azimuthal", cutoff_clip=0, cycle=3, noise=noise, cutoff_pick=SNR, patch_size=2*nb+1, connected=him)
 t1 =  time.perf_counter()
 gc.enable()
 print("\n".join(pf.log_profile(1)))
 print(f"Execution_time for pyFAI: {1000*(t1-t0)/repeat:.3f}ms")
  
-ax.plot(res1[0], res1[1], "2g", label="Cheetah")
-ax.plot(res["pos1"], res["pos0"], "1r", label="pyFAI")
+ax.plot(res["pos1"], res["pos0"], "1", label="pyFAI")
+ax.plot(res1[0], res1[1], "2", label="Cheetah")
 ax.legend()
 fig.savefig("peakfinder.eps")
 fig.show()
