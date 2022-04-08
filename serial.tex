@@ -317,6 +317,13 @@ Despite the execution time is proportional to the number of iteration of sigma-c
 background distribution actually matches a normal distribution (Gaussian). 
 Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not really an issue for the execution time and the number of actual iteration is usually few (3 is commonly observed).       
 
+\subsubsection{Limits of the Poissonian approach:}
+The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins where exhibiting no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
+This artifact was directly linked to the usage of Poisson statistics and can be demonstrated with a simple distribution of 2 pixels, having values 1 and 199. 
+The mean of this distribution is 100 and the standard deviation is also close to 100 while the uncertainty derived from a Poissonian law would  be close to 10 (i.e. sqrt(100)). 
+With the azimuthal error model, both pixels are a $1\sigma$ from the mean while with the Poissonian error-model, pixels are at $10 \sigma$.  
+This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all their contributing pixels when sigma-clipping was performed.
+
 \subsubsection{Clipping threshold}
 can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only a single pixel in a ring with a signal already following a normal law. 
 Thus, the threshold value is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq\ref{chauvenet}), which can reach several thousands and shrinks with iterations.
