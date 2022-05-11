@@ -5,12 +5,12 @@
 % Version 1.6 (28 March 2013)
 %------------------------------------------------------------------------------
 
-\documentclass[a4paper,12pt,oneside]{article}              % DO NOT DELETE THIS LINE
+\documentclass[preprint]{iucr}              % DO NOT DELETE THIS LINE
 
      %-------------------------------------------------------------------------
      % Information about journal to which submitted
      %-------------------------------------------------------------------------
-%     \journalcode{J}              % Indicate the journal to which submitted
+     \journalcode{J}              % Indicate the journal to which submitted
                                   %   A - Acta Crystallographica Section A
                                   %   B - Acta Crystallographica Section B
                                   %   C - Acta Crystallographica Section C
@@ -20,28 +20,12 @@
                                   %   J - Journal of Applied Crystallography
                                   %   M - IUCrJ
                                   %   S - Journal of Synchrotron Radiation
-\usepackage{natbib}
 \usepackage{graphicx}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
-\usepackage{fancyhdr}
-\usepackage{lineno}
-
-\newcommand{\citeasnoun}{\citet}
-\newcommand{\volbf}{\textbf}
-\linespread{2}
-
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[LE,RO]{2022-04-06}
-\fancyhead[RE,LO]{Jérôme Kieffer}
-%\fancyfoot[CE,CO]{\leftmark}
-\fancyfoot[CE,CO]{\thepage}
-
 
 \begin{document}                  % DO NOT DELETE THIS LINE
-\linenumbers
 
      %-------------------------------------------------------------------------
      % The introductory (header) part of the paper
@@ -58,17 +42,17 @@
      % Use lower-case letters in square brackets to link authors to their
      % affiliations; if there is only one affiliation address, remove the [a].
 
-%\cauthor[a]{Jérôme}{Kieffer}{jerome.kieffer@esrf.fr}{}
-%\author[a]{Nicolas}{Coquelle}
-%\author[a]{Samuel}{Debionne}
-%\author[b]{Shibom}{Basu}
-%\author[a]{Alejandro}{Homs}
-%\author[a]{Gianluca}{Santoni}
-%\author[a]{Götz}{Andrew}
-%\author[a]{Daniele}{De Sanctis}
+\cauthor[a]{Jérôme}{Kieffer}{jerome.kieffer@esrf.fr}{}
+\author[a]{Nicolas}{Coquelle}
+\author[a]{Samuel}{Debionne}
+\author[b]{Shibom}{Basu}
+\author[a]{Alejandro}{Homs}
+\author[a]{Gianluca}{Santoni}
+\author[a]{Götz}{Andrew}
+\author[a]{Daniele}{De Sanctis}
 
-%\aff[a]{European Synchrotron Radiation Facility;71, avenue des Martyrs;CS 40220;38043 Grenoble Cedex 9 \country{France}}
-%\aff[b]{EMBL Grenoble; 71 avenue des Martyrs; CS 90181; 38042 Grenoble Cedex 9; \country{France}}
+\aff[a]{European Synchrotron Radiation Facility;71, avenue des Martyrs;CS 40220;38043 Grenoble Cedex 9 \country{France}}
+\aff[b]{EMBL Grenoble; 71 avenue des Martyrs; CS 90181; 38042 Grenoble Cedex 9; \country{France}}
 
      % Use \shortauthor to indicate an abbreviated author list for use in
      % running heads (you will need to uncomment it).
@@ -96,13 +80,13 @@
 
 \maketitle                        % DO NOT DELETE THIS LINE
 
-%\begin{synopsis}
-%Precise background assessment and application to single crystal image compression and serial crystallography data reprocessing. 
-%\end{synopsis}
+\begin{synopsis}
+Precise background assessment and application to single crystal image compression and serial crystallography data reprocessing. 
+\end{synopsis}
 
-%\begin{abstract}
-%Abstract goes here.
-%\end{abstract}
+\begin{abstract}
+Abstract goes here.
+\end{abstract}
 
 
      %-------------------------------------------------------------------------
@@ -491,7 +475,7 @@ Figure \ref{peakfinder} presents the comparison between the original "peakfinder
 \end{center}
 \end{figure}
 
-TODO: analysis of those images 
+The original implementation of "peakfiner8" seams to be much more sensitive to noise compared to the implementation from pyFAI, since it found more than 10x more peaks (3346 vs 296 peaks). 
 
 TODO: indexing ratio in Crystfel
 
@@ -501,10 +485,7 @@ The runtime fro pyFAI is 10ms while it takes 300ms for Cheetah ... but pyFAI per
 %Nota: The sigma-clipping is now available on CPU in pyFAI, but neither the compression nor the peakfinder is ported yet.
 
 \section{Conclusion}
-
-TODO:
-Limitations: textured background
-
+drawback: textured background
 
      %-------------------------------------------------------------------------
      % The back matter of the paper - acknowledgements and references
@@ -512,12 +493,12 @@ Limitations: textured background
 
      % Acknowledgements come after the appendices
 
-%\ack{Acknowledgements}
+\ack{Acknowledgements}
 The authors would like to thank Gavin Vaughan, scientist at Materials beamline at the ESRF,  for the constructive discussion about sigma-clipping versus median filtering. 
 We would like to thank also Jonathan P. Wright and Carlotta Giacobbe for offering us the ability to test those algorithms on small molecule data and validate the concept on the ID11 beamline from the ESRF.
 
 
-\bibliographystyle{unsrt}
+\bibliographystyle{iucr}
 \bibliography{biblio}
 
 \end{document}                    % DO NOT DELETE THIS LINE
