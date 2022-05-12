@@ -116,7 +116,7 @@ pf = OCL_PeakFinder(integrator.lut,
                         radius=ai._cached_array[unit.name.split("_")[0] + "_center"],
                         mask=msk.astype("int8"),
                         profile=True)
-print(pf)
+print(pf, pf.ctx.devices[0])
 res = pf.peakfinder8(**kwargs_py)
 print(f"Len of pyFAI result: {len(res)}")
 gc.disable()
