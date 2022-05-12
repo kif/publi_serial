@@ -138,18 +138,32 @@ fig.show()
 print("# Histogram")
 fig,ax = subplots( figsize=(12,8))
 
+rmax = 44
 interp = Bilinear(r2d)
 r_ch = [interp(i) for i in zip(res1[1], res1[0])]
 r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
-ax.hist(r_py, 45, range=(0, 44), label="pyFAI", alpha=0.8)
-ax.hist(r_ch, 45, range=(0, 44), label="Cheetah", alpha=0.8)
-ax.set_xlabel(int1d.unit.label)
+ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
+ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
+#ax.set_xlabel(int1d.unit.label)
+ax.set_xlabel("Resolution $d$-spacing ($\\AA$)")
 ax.set_ylabel("Number of Bragg peaks (found in ring)")
 ax.legend()
-
+#
+q1 = ax.get_xticks()
+from numpy import pi
+#new_labels = [ f"{d:.4f}" for d in 20*pi/flabel]
+d1 = 20*pi/q1
+d2 = numpy.linspace(len(d1)+int(abs(d1).min()), int(abs(d1).min()), len(d1)+1)
+q2 = 20*pi/d2
+new_labels = [str(int(i)) for  i in d2]
+ax.set_xticks(q2)
+ax.set_xticklabels(new_labels)
+ax.set_xlim(0, rmax+1)
+fig.show()
+#fig.canvas.draw()
+#################
 fig.savefig("peak_per_ring.eps")
 fig.savefig("peak_per_ring.png")
-fig.show()
 
 
 
