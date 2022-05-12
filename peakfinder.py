@@ -129,7 +129,7 @@ print("\n".join(pf.log_profile(1)))
 print(f"Execution_time for pyFAI: {1000*(t1-t0)/repeat:.3f}ms")
 
 ax.plot(res["pos1"], res["pos0"], "1", label="pyFAI")
-ax.plot(res1[0], res1[1], "2", label="Cheetah")
+ax.plot(res1[0], res1[1], "2", label="Onda")
 ax.legend()
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
@@ -142,8 +142,12 @@ rmax = 44
 interp = Bilinear(r2d)
 r_ch = [interp(i) for i in zip(res1[1], res1[0])]
 r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
-ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
-ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
+#ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
+#ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
+hpy = numpy.histogram(r_py, rmax+1, range=(0, rmax))
+hch = numpy.histogram(r_ch, rmax+1, range=(0, rmax))
+ax.plot(0.5*(hpy[1][1:]+hpy[1][:-1]), hpy[0], label="pyFAI")
+ax.plot(0.5*(hch[1][1:]+hch[1][:-1]), hch[0], label="Onda")
 #ax.set_xlabel(int1d.unit.label)
 ax.set_xlabel("Resolution $d$-spacing ($\\AA$)")
 ax.set_ylabel("Number of Bragg peaks (found in ring)")
