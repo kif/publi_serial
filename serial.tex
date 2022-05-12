@@ -491,19 +491,23 @@ Figure \ref{peakfinder} presents the comparison between the original \textit{pea
 \begin{figure}
 \label{peakfinder}
 \includegraphics[width=12cm]{peakfinder}
-\caption{Comparison of the reference \textit{peakfinder8} as implemented in Cheetah (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus6M MX diffraction frame.}
+\caption{Comparison of the reference \textit{peakfinder8} interfaced with Onda (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus6M protein diffraction frame.}
 \end{figure}
-In figure \ref{peakfinder}, the minimum SNR is 3 with a noise level of 1 since the detector is Poissonian.
-Peaks are registered if 4 pixels meet the SNR criterion in a 5x5 pixel patch around the peak.
-Those parameters have been tuned to obtain a comparable number of peaks with each algorithm: 287 with pyFAI and 293 with Onda.
-This allows to compare the distribution of points as function of
+
+In this figure \ref{peakfinder}, most peak found by both implementation correspond and superimpose with Bragg-peak visible by a crystallographer's eye.
+One may have the impression that more blue-peaks are found by pyFAI close to the beam center while more orange peaks are spotted by Onda in the outer-shell.
+This plot was made with a minimum SNR of three and a noise level of one since the Pilatus detector is Poissonian.
+Peaks were registered if four pixels meet the SNR criterion in a 5x5 pixel patch around the peak.
+Those parameters have been tuned to obtain a comparable number of peaks with both implementations: 290 with pyFAI and 293 with Onda.
+The similarity of those figures allows a direct comparison of peaks found per resolution shell, histogram plotted in figure \ref{peak_per_ring}.
 
 \begin{figure}
-\label{peakfinder}
-\includegraphics[width=12cm]{peakfinder}
-\caption{Comparison of the reference \textit{peakfinder8} as implemented in Cheetah (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus6M MX diffraction frame.}
+\label{peak_per_ring}
+\includegraphics[width=12cm]{peak_per_ring}
+\caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each of the shell is one inverse nanometer.}
 \end{figure}
 
+A word on performances...
 \subsection{Quality of the }
 
 
