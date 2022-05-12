@@ -507,14 +507,23 @@ The similarity of those figures allows a direct comparison of peaks found per re
 \caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each of the shell is one inverse nanometer.}
 \end{figure}
 
-A word on performances...
-\subsection{Quality of the }
+The analysis of the histogram in figure \ref{peak_per_ring} confirms the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
+This is likely due to the curvature of the Debye-Scherrer ring: the original version of peakfinder8 evaluates the variance in a neighborhood defined by some radius around the point of interest and the variance is higher there due to the important curvature closer to the beam-center.
+On the opposite, pyFAI knows about this curvature and measures the variance on the complete ring.
+Points picked by Onda at larger q-values do not look like Bragg-peaks but this could be a side-effect of the parameter tuning to get the same number of peaks for both algorithms.
 
+A word on performances: the Python binding in Onda to the peakfinder8 algorithm from Cheetah runs in 180ms on a high-end server CPU (AMD Epyc 7262) and 300ms on a workstation (Intel Xeon E5-1650 v4). 
+The version available in pyFAI was designed in OpenCL\cite{opencl_khronos, opencl, pyopencl} and runs best on GPUs: 30ms on a AMD Vega 56 and in 10 ms on a Nvidia RTX A5000. 
+Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper than Epyc processor, has the the same performances (but the CPU has eight cores). 
 
-%JK: I am probably not using properly peakfinder8 ... any help welcome on that
-\subsection{Performances}
-The runtime fro pyFAI is 10ms while it takes 300ms for Cheetah ... but pyFAI performs has the calculation performed by a GPU which may not be generally available.
-%Nota: The sigma-clipping is now available on CPU in pyFAI, but neither the compression nor the peakfinder is ported yet.
+\subsection{Quality of the peakfinder on serial crystallography data}
+
+The quality of peaks extracted with this algorithm is evaluated on a serial-crystallography dataset acquired at the ID30B beamline at the ESRF with an Eiger-4M detector \cite{ssx-Lyso}.
+Tiny crystals of Lysozyme were deposited on a membrane and this membrane was scanned in front of the beam.
+A fraction of 1000 frames of the complete dataset was processed several times with CrystFEL and 
+
+The ultimate goal is to perform peak-finding as 
+
 
 \section{Conclusion}
 drawback: textured background
