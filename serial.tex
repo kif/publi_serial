@@ -436,8 +436,7 @@ The densified dataset was processed via XDS and the summary indicator for the qu
 Since those integrator are measured on integral peaks with $I/\sigma>3$ and the sparsification was performed
 with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{xds_summary}, hereafter.
 
-\begin{table}[h]
-\begin{center}
+\begin{table}
 \label{xds_summary}
 \caption{Quality indicators after peak integration and averaging using XDS\cite{xds}}.
 \begin{tabular}{|c|c c c|c c c|} 
@@ -453,7 +452,6 @@ $CC_{1/2}$ \cite{cc1/2}  & 99.7 &94.0 & 99.7   & 99.6 & 95.4 & 99.7  \\
 $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 \hline
 \end{tabular}
-\end{center}
 \end{table}
 
 
@@ -518,12 +516,31 @@ Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper 
 
 \subsection{Quality of the peakfinder on serial crystallography data}
 
-The quality of peaks extracted with this algorithm is evaluated on a serial-crystallography dataset acquired at the ID30B beamline at the ESRF with an Eiger-4M detector \cite{ssx-Lyso}.
-Tiny crystals of Lysozyme were deposited on a membrane and this membrane was scanned in front of the beam.
-A fraction of 1000 frames of the complete dataset was processed several times with CrystFEL and 
+The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30B (?) beamline at the ESRF with an Eiger-4M detector.
+A fraction of 1000 frames of the dataset \cite{ssx-Lyso} was used as a probe and was indexed with the \textit{indexamajig} tool from CrystFEL. 
+Since all frames show Bragg-peaks (figure \ref{silx}) the number of indexed frames can be seen as a quality indicator of the peak-picking algorithm used, when all other parameter remain unchanged.
+The indexation was performed with the \textsc{xgandalf} algorithm with default settings from CrystFEL 0.10.1 and was provided the cell parameter: tetragonal Lysozyme $a=b=78.77\AA; c=39.04\AA; \alpha=\beta=\gamma = 90°$.
+The table \ref{crystfel} compares the number of frames properly indexed with the different picking algorithms available in CrystFEL with the algorithm presented. 
 
-The ultimate goal is to perform peak-finding as 
+\begin{table}
+\label{crystfel}
+\caption{Quality of the indexing with various peak-picker available in CrystFEL\cite{CrystFEL}}.
+\begin{tabular}{|c| c | c |} 
+\hline
+Method & indexation rate & run-time (s) \\ 
+\hline
+Zaef \cite{zaefferer} & 16\textperthousand & 572s \\
+PeakFinder8 \cite{Cheetah2014} & 456\textperthousand& 1577s?\\
+PeakFinder9 \cite{CrystFEL} & 442\textperthousand& 8307s?\\
+pyFAI (this contribution) & 481\textperthousand& 8307s?\\
+\hline
+\end{tabular}
+\end{table}
 
+The \textit{robust peak-finder} algorithm is not yet available from within CrystFEL and the source code provided at \citeasnoun{robustpeakfinder} does not compile, thus its performance was not compared.
+The performances obtained with the algorithm described in this contribution is slightly better than reference implementations like \textit{peakfinder8} or \textit{peakfinder9}. 
+The execution time for peak extraction is similar to the one used for the sparsification: 
+this represents less than 30s for 1000 frames but most of the time is spent in reading and writing HDF5 files.
 
 \section{Conclusion}
 drawback: textured background
