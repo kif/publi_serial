@@ -85,7 +85,14 @@ Precise background assessment and application to single crystal image compressio
 \end{synopsis}
 
 \begin{abstract}
-Abstract goes here.
+
+This contribution is about real-time analysis of diffraction images acquired at high frame-rate (1 kHz) and its applications to macro-molecular serial crystallography.
+A new signal separation algorithm will be presented, able to distinguish amorphous (or powder diffraction) component from the signal originating from larger (single) crystals.
+It relies on the ability to work efficiently in azimuthal space and derives from the work performed on pyFAI, the fast azimuthal integration library.
+Two applications are built upon this separation algorithm: a lossy compression algorithm and a peak-picking algorithm.
+Their performances will be compared to state of the art, reference implementations from CrystFEL.
+
+
 \end{abstract}
 
 
@@ -125,7 +132,8 @@ To this reason, careful and precise location of Bragg peaks is vital.
 
 The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
 For this, the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
-Unlike X-FEL, synchrotron X-ray beam show little bunch to bunch variability and with the beam being well characterized, those anisotropic correction can be easily taken into account.
+Unlike X-FEL, synchrotron X-ray beam is well characterized in energy and shows little bunch to bunch variability. 
+All those anisotropic correction can be easily taken into account.
 
 The initial implementation in pyFAI \cite{pdj2013} used to rely on a 2D polar transform followed by a median filter in the azimuthal dimension 
 to separate amorphous scattering from single crystal scattering.
@@ -456,28 +464,48 @@ The sigma clipping algorithm provides us with the background (average and deviat
 For this,  several additional checks are performed on the local neighborhood which is a small patch (typically 3x3 or 5x5 pixels):
 \begin{itemize}
 \item The considered pixel is the maximum of the local neighborhood.
-\item The number of pixels in the local neighborhood satisfying the intensity condition ($|I-\bar{I} |> n \sigma_{I}$)  is above a given minimum.
+\item Enough of pixels in the local neighborhood satisfying the signal over noise ratio (SNR) condition: $|I-\bar{I} |> n \sigma_{I}$, typically 2 to 5 pixels
 \end{itemize}
 
-For each peak, the pixel coordinate, the precise centroïd, the sum of the data and its propagated deviation are recorded and reported. 
-Those results can be subsequently injected into CrystFEL \cite{CrystFEL} which is performing the indexing of
-the data and validating if those peaks corresponds to an realistic crystal lattice \cite{nanopeakcell}.
+For each peak, the pixel coordinate, the precise centroïd, the sum of data and its propagated deviation are recorded and reported. 
+Those peak-position are saved into a HDF5 file (represented figure \ref{silx}) following the CXI format \cite{cxi} which can be can be read from CrystFEL \cite{CrystFEL}.
+CrystFEL is the swiss-knife of serial-crystallography which allows to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
+Since indexing is compute intensive, CrystFEL can distributes calculation over several cores or nodes.
+
+\begin{figure}
+\label{silx}
+\includegraphics[width=12cm]{silx_view}
+\caption{Tree structure (left-hand side) and default plot with the number of peaks found per frame (right-hand side) of a CXI file produced by pyFAI and visualized with the silx viewer \cite{silx}.}
+\end{figure}
 
 
-\subsection{Quality of the extracted peaks}
-Figure \ref{peakfinder} presents the comparison between the original "peakfinder8" described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI. 
+the data and validating if those peaks correspond to any realistic crystal lattice \cite{nanopeakcell}.
+
+We will first compare the peak-picking algorithm with some reference implementation on a single frame before
+evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator.
+
+\subsection{Comparison of picked peaks}
+Figure \ref{peakfinder} presents the comparison between the original \textit{peakfinder8} described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI on the same Pilatus 6M image used in figure \ref{fig1}. 
+%More advanced peakfinder algorithm are available in CrystFEL like \textit{peakfinder9} but it is not available as 
 
 \begin{figure}
 \label{peakfinder}
-\begin{center}
 \includegraphics[width=12cm]{peakfinder}
 \caption{Comparison of the reference \textit{peakfinder8} as implemented in Cheetah (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus6M MX diffraction frame.}
-\end{center}
+\end{figure}
+In figure \ref{peakfinder}, the minimum SNR is 3 with a noise level of 1 since the detector is Poissonian.
+Peaks are registered if 4 pixels meet the SNR criterion in a 5x5 pixel patch around the peak.
+Those parameters have been tuned to obtain a comparable number of peaks with each algorithm: 287 with pyFAI and 293 with Onda.
+This allows to compare the distribution of points as function of
+
+\begin{figure}
+\label{peakfinder}
+\includegraphics[width=12cm]{peakfinder}
+\caption{Comparison of the reference \textit{peakfinder8} as implemented in Cheetah (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus6M MX diffraction frame.}
 \end{figure}
 
-The original implementation of "peakfiner8" seams to be much more sensitive to noise compared to the implementation from pyFAI, since it found more than 10x more peaks (3346 vs 296 peaks). 
+\subsection{Quality of the }
 
-TODO: indexing ratio in Crystfel
 
 %JK: I am probably not using properly peakfinder8 ... any help welcome on that
 \subsection{Performances}
