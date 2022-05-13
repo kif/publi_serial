@@ -298,7 +298,8 @@ Subplot (d) presents the histogram of intensities for two rings at r=80mm and r=
 
 The core idea of the algorithm for background extraction is to model the distribution of background pixels. Unlike Bayesian statistics \cite{Sivia2006} where the cost function is usually tuned to weight less outlier, here, those outliers are simply flagged and discarded.
 Positive outliers can reasonably be assigned to Bragg peaks and negative outliers to shadows or defective pixels. 
-The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq\ref{clip}) which has the effect of re-centering the distribution and enforcing a normal distribution of the remaining values:
+The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal over Noise Ratio (SNR).
+This clipping re-centers the distribution of remaining pixelse and enforces a normal distribution of the remaining values:
 \begin{equation}
 \label{clip}
 |I - <I>| > n \cdot \sigma(I)
@@ -337,7 +338,7 @@ Diffraction images from a single macromolecular crystal exhibit usually an isotr
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
-This cut-off value $n$, also called Signal/Noise Ratio (SNR), controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded with $n=1$;  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
+This cut-off value $n$ (also called $SNR_{pick}$) controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded with $n=1$;  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
 \begin{figure}
 \label{distribution}
 \begin{center}
