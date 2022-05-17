@@ -103,55 +103,93 @@ Their performances will be assessed and compared to state of the art reference i
      % and \subsubsection's as required.
 
 \section{Introduction}
-\subsection{Serial crystallography on synchrotron sources (SSX)}
+The main limitation of rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis, is radiation damage resulting from the exposure to the  beam.
+In macro-molecular crystallography (MX), several crystals are often need to collect a complete dataset.
+Serial crystallography overcomes radiation damage by exposing each crystal a single time, thus, hundreds or thousands of them are needed to collect a complete dataset, and exposed in a serial way.
+%Crystals are exposed in a serial way to the beam with random orientation, giving making the data-reduction of
+
+\subsection{Serial crystallography using synchrotron sources (SSX)}
 %not sure we need subsections here
-Serial crystallography is a relatively new technique in structural biology. 
-It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial way to the X-ray beam to collect a complete dataset. 
-This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
-The serial approach is particularly useful to try to overcome the limitations of radiation damage, in particular in very small crystals.
-The technique was first developed for X-ray free electron lasers (XFEL) \cite{Chapman2011}
-but recently also adapted to be performed at synchrotron light sources.
-Macromolecular crystallography beamlines (MX) have been extremely specialized towards rotational data collection and are thus not well addapted to SSX.
-The higher flux requirement for SSX make it a clear candidate to be performed at 4\textsuperscript{th} generation synchrotron sources, like the new ESRF-EBS update \cite{EBS}.
-The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (thanks to multi-layer optics), a high-speed chopper, several sample delivery methods and a fast detector.
-\subsection{Jungfrau4M detector}
-Unlike photon counting detectors like the Eiger detector \cite{Eiger}, the Jungfrau (developed at PSI) is an integrating detector which is not limited by the count rate, even under very intense flux as expected when recording Bragg-peaks \cite{jungfrau2016}.
-To cope with this very large number of photons, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision on the order of a fraction of a keV on the higher gain mode, a precision of the order one a photon in the intermediate level and the ability to cope with thousands of photons per millisecond in the lower gain mode.
-Since the Jungfrau is an integrating detector, every pixel has has three dark-current values, called pedestal and three gain values (one for each gain level). 
-This large number of parameters per pixel combined with the gain-compression makes the preprocessing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the storage size \cite{jungfrau_PSI}.
-The ID29 beamline features a Jungfrau 4M detector, operating at 1kHz, pace imposed by a chopper and synchronized with the photon bunches from the ESRF.
-The data analysis and storage are thus anticipated to be extremely challenging. 
+%Serial crystallography is a relatively new technique in structural biology. 
+%It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial %way to the X-ray beam to collect a complete dataset. 
+%This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
+%The serial approach is particularly useful to try to overcome the limitations of radiation damage in %rotational crystallography, particularly in very small crystals.
+
+The technique was first developed for X-ray free electron lasers (\textsc{xfel}) \cite{Chapman2011} and then adapted to be performed at synchrotron light sources \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
+However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and are thus not well adapted to SSX.
+The high flux needed to collect all diffraction signal from a single crystal within a single exposure makes  the SSX technique a good candidate to benefit from the 4\textsuperscript{th} generation synchrotron sources, such as the new ESRF-EBS update \cite{EBS}.
+The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (thanks to multi-layer optics), a high-speed chopper (to separate photon bunches), several sample delivery methods and a fast detector.
+
+\subsection{Jungfrau-4M detector}
+Macro-molecular crystallography has enormously progressed in the last decades with to the introduction of photon-counting detectors \cite{pilatus}. 
+With the absence of read-out noise and their fast speed, their only limitation is the achievable count-rate, i.e. the number of photons a pixel is able to count during the exposure.
+% difference bewteen pixel counting vs integrating, in speed ...
+Unlike photon-counting detectors such as the Eiger detector \cite{Eiger}, the Jungfrau detector \cite{jungfrau2016} is an integrating detector thus, it is not limited by the count rate, even under very intense flux as expected when recording Bragg-peaks.
+To cope with this photons density, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision of the order of one third of a keV on the higher gain mode, a precision of the order of one photon in the intermediate level and the ability to cope with thousands of photons in the lower gain mode, every millisecond.
+Since the Jungfrau detector is an integrating detector, dark current and flat-field correction have to be applied: every pixel has three dark-current values (called pedestals) and three gain values (one for each gain level). 
+However, this large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
+The ID29 beam-line features a Jungfrau-4M detector, operating at 1kHz, pace imposed by the chopper and synchronized with the photon bunches from the ESRF.
+At nominal speed, this beam-line is expected to produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
+
 \subsection{Requirements for online data processing}
-%again, this is not great, as it is not the text below. 
-Efficient processing of raw images is vital for SSX.
-Multiple challenges are present, in particular partiality and low completeness of data collected for each individual crystal.
-To this reason, careful and precise location of Bragg peaks is vital.
+
+Serial crystallography is one of the techniques where online data processing is likely to have most impact:
+millions of images are to be collected but too fast to be saved. 
+On the other hand only about 10\% of them will contain diffraction signal and out of them, about half can be indexed and integrated and will actually be used to solve the crystal structure.
+Thus efficient processing of raw images is vital for SSX, with 4 levels of increasing complexity:
+\begin{itemize}
+    \item image reconstruction with pedestal correction
+    \item \textit{veto-}algorithm able to sieve out images with poor signal
+    \item save only pixels with diffraction signal
+    \item precise location of peak position with indexation
+    \item real-time integration of diffraction peaks
+\end{itemize}.
+
+The first level has been described in \citeasnoun{lima2}.
+This document will focus on subsequent steps: the third point is addressed in section 2 and the fourth in section 3, leaving real-time integration as a challenge for the future.
+%The second step is to collect only pixel values corresponding to diffraction signal.
+%or even an algorithm able to point.
+
+% 1e6 images, 100k hits, 10k indexed and integrated images
+% for each of the individual frame low partiallity need 10k frames/crystall to get a complete dataset with enough redundancy
 
 
-We are missing some transition here !
+
+%Multiple challenges are present, in particular partiality and low completeness of data collected for each individual crystal.
+%For this reason, careful and precise location of Bragg peaks is essential.
+
+
+
+%The document is sub-divided like 
+%Section 2 presents an efficient way to separate Bragg-peaks from background, this technique is used in section 3 to compress MX data using sparsification of data. 
+%The data 
 
 \section{Algorithm for the separation of amorphous background from Bragg peaks}
 \subsection{Background scattering}
+%be careful & be precise ...
+The simplest implementation of Bragg peaks separation is to assume that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
 
-The simplest implementation of Bragg peaks separation is to consider that the background originates from scattering from amorphous material or from an isotropic powder, both giving isotropic signal ideally presenting only smooth variations.
-For this, the raw signal has to be corrected from dark noise and any systematic anisotropic effects like polarization corrections.
-Unlike X-FEL, synchrotron X-ray beam is well characterized in energy and shows little bunch to bunch variability. 
-All those anisotropic correction can be easily taken into account.
 
+
+For this, the raw signal has to be corrected from dark noise and any systematic anisotropic effects such as polarization corrections.
+Unlike X-FEL, synchrotron X-ray beam is well characterized in energy and shows little bunch-to-bunch variability. 
+All anisotropic correction can be easily taken into account.
+
+%the first thing is to get it working, the second is to make it fast ... coming from another field of science.
 The initial implementation of signal separation in pyFAI \cite{pdj2013} was relying on a 2D polar transform followed by a median filter in the azimuthal dimension to calculate the amorphous scattering curve.
-Despite this method has been successfully used for large dataset analysis \cite{brocades}, it presents several major drawbacks:
+Nevertheless this method has been successfully used for large dataset analysis \cite{brocades}, it presents four major drawbacks:
 \begin{itemize}
 \item The 2D averaging mixes the signal of several pixels and blurs the signal. 
 \item Pixel-splitting is needed to leverage the Moiré effect in the 2D averaging, but this increases further the blurring. 
 \item The 1D curve obtained after the application of the median filter shows sharp jumps from one azimuthal bin to its neighbour.
-\item Median filter is computationally heavy since it requires to sort out every azimuthal bin.
+\item The median filter is computationally heavy since it requires to sort out every azimuthal bin.
 \end{itemize}
 
 The coming sections present an efficient way to perform the azimuthal averaging (including the associated variance propagation),  its application to the statistical analysis in polar space and extraction of background from a diffraction image. 
 
 \subsection{Efficient azimuthal averaging and uncertainties evaluation}
 
-\subsubsection{Preprocessing:}
+\subsubsection{Pre-processing:}
 The first step of the analysis consists in applying a pixel-wise correction for dark current and several normalization corrections \cite{pyfai_2020}:
 \begin{equation}
 \label{norm}
@@ -208,7 +246,7 @@ Since this document focuses on the uncertainties of pixel values, the \textit{st
 \subsubsection{Uncertainty evaluation from the variance in a bin:}
 
 Unlike photon counting detectors, most detectors are not following the Poisson law and the establishment of a formula $\sigma^2 = f(I)$ is not simple, if possible at all. 
-In the case of the Jungfrau detector considered for the ESRF-ID29 beamline, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
+In the case of the Jungfrau detector considered for the ESRF-ID29 beam-line, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
 A generic approach is proposed here to measure the variance in every single azimuthal bin.
 
 When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities could be used to estimate the uncertainty. 
@@ -233,7 +271,7 @@ Single pass implementations of variance calculation are faster since they access
 \citeasnoun{variance2018} presents a complete review, from which we adapt to the formalism of crystallography some key equations.
 For example the weight for a pixel is $\omega_i = c_i \cdot norm_i$.
 If $P$ is a partition of the ensemble of pixels falling into a given azimuthal bin, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  
-be the sum of weights (Eq \ref{omega}), the weighted sum of $V$ (Eq \ref{Vp}) and the weighted sum of deviation squared (Eq \ref{VVp}) over the partition $P$: 
+be the sum of weights (Eq \ref{omega}), the weighted sum of $V$ (Eq. \ref{Vp}) and the weighted sum of deviation squared (Eq \ref{VVp}) over the partition $P$: 
 \begin{equation}
 \label{omega}
 \Omega_{P} = \sum\limits_{i \in P} \omega_i = \sum\limits_{i \in P} c_i \cdot norm_i 
@@ -290,7 +328,7 @@ roughly with the average (in \ref{fig1}b) and uncertainties (in \ref{fig1}c).
 \label{fig1}
 \begin{center}
 \includegraphics[width=14cm]{fig1}
-\caption{Single crystal diffraction frame obtained from insulin with a Pilatus6M (a) with the azimuthally averaged signal (b), 
+\caption{Single crystal diffraction frame obtained from insulin with a Pilatus 6M (a) with the azimuthally averaged signal (b), 
 before and after clipping data. Uncertainties are presented in (c) when calculated assuming a Poissonian error model (orange, red) or when measuring the deviation within all pixels in a ring (green, blue).
 Subplot (d) presents the histogram of intensities for two rings at r=80mm and r=160mm from beam center with the distribution fitted as Gaussian curves.}
 \end{center}
@@ -299,7 +337,7 @@ Subplot (d) presents the histogram of intensities for two rings at r=80mm and r=
 The core idea of the algorithm for background extraction is to model the distribution of background pixels. Unlike Bayesian statistics \cite{Sivia2006} where the cost function is usually tuned to weight less outlier, here, those outliers are simply flagged and discarded.
 Positive outliers can reasonably be assigned to Bragg peaks and negative outliers to shadows or defective pixels. 
 The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal over Noise Ratio (SNR).
-This clipping re-centers the distribution of remaining pixelse and enforces a normal distribution of the remaining values:
+This clipping re-centers the distribution of remaining pixels and enforces a normal distribution of the remaining values:
 \begin{equation}
 \label{clip}
 |I - <I>| > n \cdot \sigma(I)
@@ -318,13 +356,13 @@ Since the loop exits as soon as no more outliers were discarded at the clipping 
 \subsubsection{Limits of the Poissonian approach:}
 The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins where exhibiting no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
 This artifact was directly linked to the usage of Poisson statistics and can be demonstrated with a simple distribution of 2 pixels, having values 1 and 199. 
-The mean of this distribution is 100 and the standard deviation is also close to 100 while the uncertainty derived from a Poissonian law would  be close to 10 (i.e. sqrt(100)). 
+The mean of this distribution is 100 and the standard deviation is also close to 100 while the uncertainty derived from a Poissonian law would  be close to 10 (i.e. $\sqrt{100}$). 
 With the azimuthal error model, both pixels are a $1\sigma$ from the mean while with the Poissonian error-model, pixels are at $10 \sigma$.  
 This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all their contributing pixels when sigma-clipping was performed.
 
 \subsubsection{Clipping threshold}
 can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only a single pixel in a ring with a signal already following a normal law. 
-Thus, the threshold value is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq\ref{chauvenet}), which can reach several thousands and shrinks with iterations.
+Thus, the threshold value is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq. \ref{chauvenet}), which can reach several thousands and shrinks with iterations.
 Typically the numerical value for this cut-off varies from 2 to 4.   
 \begin{equation}
 \label{chauvenet}
@@ -334,7 +372,7 @@ SNR_{chauvenet} =  \sqrt{2 log(\frac{size}{\sqrt{2 \pi}})}
 
 \section{Application to single crystal diffraction image compression}
 %I explicit here MAcromolecular as we are talking about id29. Remove is superfluous.
-Diffraction images from a single macromolecular crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
+Diffraction images from a single macro-molecular crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
@@ -368,7 +406,7 @@ All sparse datasets (averaged and uncertainties curves, pixel coordinates, ...) 
 \subsection{Densification}
 Since no crystallographic software package is aware (yet) of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
 The software constrains for this densification code are very different from the one for sparisfication since this code can be used by the final users.
-For this reason `densify-Bragg' was optimized to run on multicore CPU.
+For this reason `densify-Bragg' was optimized to run on multi-core CPU.
 The only important options are, beside the file-format and file-name, whether the background noise has to be reconstructed or not. 
 Some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result without noisy background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background restored. 
 Shaded regions are never reconstructed properly and should be masked adequately in the reduction software.
@@ -389,8 +427,8 @@ A background dataset of 1800 such images sparsifies into a 11MB HDF5 file which 
 Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compresses great with bitshuffle-LZ4.
 
 In production conditions, one would like to tune this threshold to the minimal value which guarantees a compression ratio large enough to allow the storage of all data.
-For ESRF-ID29, where a Jungfrau 4M is operating at 1kHz, some `pedestal` preprocessing convert 16-bits integers into 32-bits floating point values and doubles the needed bandwidth for data saving. 
-The detector outputs the data via 8x 10 Gbit/s network links and the storage is performed via  a single  25 Gbit/s link, making a minimum compression ratio of 6.4x which is equivalent to a cutoff at $1.4\sigma$ (cf. figure \ref{distribution}).
+For ESRF-ID29, where a Jungfrau 4M is operating at 1kHz, the pedestal+gain pre-processing convert 16-bits integers into 32-bits floating point values, doubling the bandwidth for data saving. 
+The detector outputs the data via $8\times$ 10Gbit/s network links and the storage is performed via a single 25 Gbit/s link, making a minimum compression ratio of 6.4x which is equivalent to a cutoff at $1.4\sigma$ (cf. figure \ref{distribution}).
 
 
 \subsubsection{Compression speed:}
@@ -444,7 +482,8 @@ with a cut-off of 2, those result should be almost unaffected, which is confirme
 
 \begin{table}
 \label{xds_summary}
-\caption{Quality indicators after peak integration and averaging using XDS \cite{xds}}.
+\caption{Quality indicators after peak integration and averaging using XDS \cite{xds}. 
+Lysozyme sample provided by Dectris for advertizing their Eiger 4M detector (TODO).}.
 \begin{tabular}{|c|c c c|c c c|} 
 \hline
 Indicator & \multicolumn{3}{c|}{Initial dataset} & \multicolumn{3}{c|}{Lossy compressed dataset ($2\sigma$)} \\ 
