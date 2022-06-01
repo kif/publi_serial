@@ -15,6 +15,8 @@ import gc
 import shutil
 from pyFAI.ext.bilinear import Bilinear
 
+pyfai_color = "limegreen"
+onda_color = "orange"
 
 #Installation of a local copy of the Cython-bound peakfinder8
 targeturl = "https://github.com/kif/peakfinder8"
@@ -62,7 +64,7 @@ polarization = ai.polarization(factor=polarization_factor)
 fig,ax = subplots( figsize=(12,8))
 #fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
-mimg = ax.imshow(fixed, norm=ln, interpolation="nearest", cmap="magma")#bicubic")
+mimg = ax.imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis")
 
 int1d = ai.integrate1d(fimg.data, npt, unit=unit, method=method)
 m = list(ai.engines.keys())[0]
@@ -128,8 +130,8 @@ gc.enable()
 print("\n".join(pf.log_profile(1)))
 print(f"Execution_time for pyFAI: {1000*(t1-t0)/repeat:.3f}ms")
 
-ax.plot(res["pos1"], res["pos0"], "1", label="pyFAI")
-ax.plot(res1[0], res1[1], "2", label="Onda")
+ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
+ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
 ax.legend()
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
@@ -146,11 +148,12 @@ r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
 #ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
 hpy = numpy.histogram(r_py, rmax+1, range=(0, rmax))
 hch = numpy.histogram(r_ch, rmax+1, range=(0, rmax))
-ax.plot(0.5*(hpy[1][1:]+hpy[1][:-1]), hpy[0], label="pyFAI")
-ax.plot(0.5*(hch[1][1:]+hch[1][:-1]), hch[0], label="Onda")
+ax.plot(0.5*(hpy[1][1:]+hpy[1][:-1]), hpy[0], "-", color=pyfai_color, label="pyFAI")
+ax.plot(0.5*(hch[1][1:]+hch[1][:-1]), hch[0], "-", color=onda_color, label="Onda")
 #ax.set_xlabel(int1d.unit.label)
 ax.set_xlabel("Resolution $d$-spacing ($\\AA$)")
-ax.set_ylabel("Number of Bragg peaks (found in ring)")
+ax.set_ylabel("Number of Bragg peaks")
+ax.set_title("Density of Bragg peaks per ring")
 ax.legend()
 #
 q1 = ax.get_xticks()

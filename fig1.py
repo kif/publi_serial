@@ -20,7 +20,7 @@ fixed[msk] = 1
 fig,ax = subplots(2,2, figsize=(12,8))
 fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
-mimg = ax[0,0].imshow(fixed, norm=ln, interpolation="hanning")
+mimg = ax[0,0].imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis")
 ax[0,0].set_title("a) MX diffraction frame")
 
 colorbar(mimg, ax=ax[0,0])
