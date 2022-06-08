@@ -44,7 +44,7 @@ unit = pyFAI.units.to_unit("q_nm^-1")
 dummy = -2
 ddummy=1.5
 npt = 500
-repeat = 10
+repeat = 100
 SNR=3
 noise=1.0
 nb = 2
@@ -90,11 +90,12 @@ res1 = peakfinder_8(**kwargs_pf)
 
 kwargs_py = {"data":fimg.data,
              "dummy": dummy, "delta_dummy":ddummy,
-             "error_model": "azimuthal",
+             "error_model": "hybrid", #azimuthal",
              "cutoff_clip":0,
              "cycle":3,
              "noise":noise,
-             "cutoff_pick":SNR,
+             # "cutoff_pick":SNR,
+             "cutoff_peak":SNR,
              "patch_size":2*nb+1,
              "connected":him,
              "polarization": polarization
@@ -120,7 +121,7 @@ pf = OCL_PeakFinder(integrator.lut,
                         profile=True)
 print(pf, pf.ctx.devices[0])
 res = pf.peakfinder8(**kwargs_py)
-print(f"Len of pyFAI result: {len(res)}")
+print(f"Len of pyFAI result: {len(res)} (azimuthal)")
 gc.disable()
 t0 = time.perf_counter()
 for i in range(repeat):
@@ -130,8 +131,15 @@ gc.enable()
 print("\n".join(pf.log_profile(1)))
 print(f"Execution_time for pyFAI: {1000*(t1-t0)/repeat:.3f}ms")
 
+#kwargs_py["error_model"] = "hybrid"
+#reh = pf.peakfinder8(**kwargs_py)
+#print(f"Len of pyFAI result: {len(reh)} (hybrid)")
+#ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI_hy")
+
 ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
 ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
+
+
 ax.legend()
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
@@ -144,10 +152,13 @@ rmax = 44
 interp = Bilinear(r2d)
 r_ch = [interp(i) for i in zip(res1[1], res1[0])]
 r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
+#r_ph = [interp(i) for i in zip(reh["pos0"], reh["pos1"])]
 #ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
 #ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
 hpy = numpy.histogram(r_py, rmax+1, range=(0, rmax))
+#hph = numpy.histogram(r_ph, rmax+1, range=(0, rmax))
 hch = numpy.histogram(r_ch, rmax+1, range=(0, rmax))
+#ax.plot(0.5*(hph[1][1:]+hph[1][:-1]), hph[0], "-", color="red", label="pyFAI_hybrid")
 ax.plot(0.5*(hpy[1][1:]+hpy[1][:-1]), hpy[0], "-", color=pyfai_color, label="pyFAI")
 ax.plot(0.5*(hch[1][1:]+hch[1][:-1]), hch[0], "-", color=onda_color, label="Onda")
 #ax.set_xlabel(int1d.unit.label)
