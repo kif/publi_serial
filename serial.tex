@@ -347,9 +347,9 @@ The orange plot in figure \ref{fig1}b presents the average after having discarde
 After clipping, the average and uncertainties curves have lost most of their spikes, which means that most Bragg peaks and shadowed pixel have been discarded.
  
 \subsection{Sigma-clipping}
-The \textit{sigma-clipping} algorithm consists in applying the outlier rejection, previously described, several times.
-If the initial distribution was mono-modal, this algorithm enforces gradually the background pixels towards a normal distribution.
-If the initial distribution was more complicated (typically multi-modal), few pixels are likely to be rejected  due to large standard-deviation.
+The \textit{sigma-clipping} algorithm consists in applying this outlier rejection several times.
+If the initial distribution was mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability which is likely to look like a normal distribution.
+If the initial distribution was more complicated (typically multi-modal), the necessary larger standard-deviation will prevent most outlier pixels from being rejected, making it conservative in complicated cases.
 This algorithm takes two parameters: the number of iterations and the rejection cut-off (SNR).
 %I merged number of iterations and sigma clipping  as closely connected.
 Despite the execution time is proportional to the number of iteration of sigma-clipping, iterations should continue until no more outliers are found, so that the background data can be treated assuming a normal distribution. 
@@ -544,11 +544,11 @@ Figure \ref{peakfinder} presents the comparison between the original \textit{pea
 \begin{figure}
 \label{peakfinder}
 \includegraphics[width=12cm]{peakfinder}
-\caption{Comparison of the reference \textit{peakfinder8} interfaced with Onda (in orange, execution time 300ms) and the version from pyFAI (in light blue, execution time 10ms) on top of a Pilatus 6M diffraction frame (insulin).}
+\caption{Comparison of the reference \textit{peakfinder8} interfaced with Onda (in orange, execution time 300ms) and the version from pyFAI (in green, execution time 10ms) on top of a Pilatus 6M diffraction frame of an insulin crystal.}
 \end{figure}
 
 In figure \ref{peakfinder}, most peak found by both implementation match and superimpose with Bragg-peaks.
-There are more blue-peaks (found by pyFAI) closer to the beam center while more orange peaks (found by Onda) are located in the outer-shell.
+There are more green peaks (found by pyFAI) closer to the beam center while more orange peaks (found by Onda) are located in the outer-shell.
 This plot was made with a minimum SNR of three and a noise level of one since the Pilatus detector is Poissonian.
 Peaks were registered if four pixels meet the SNR criterion in a 5x5 pixels patch around the peak.
 Those parameters have been tuned to obtain a comparable number of peaks with both implementations: 290 with pyFAI and 293 with Onda.
@@ -557,7 +557,7 @@ The similarity of those figures allows a direct comparison of peaks found per re
 \begin{figure}
 \label{peak_per_ring}
 \includegraphics[width=12cm]{peak_per_ring}
-\caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each of the shell is one inverse nanometer.}
+\caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each radial-shell is one inverse nanometer in $q-$space.}
 \end{figure}
 
 The analysis of the histogram in figure \ref{peak_per_ring} confirms the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
@@ -607,6 +607,10 @@ Since time is mostly spent in indexing, sets of peaks which are simpler to index
 Table \ref{crystfel} presents also the indexing performances when using the option \textit{--xgandalf-fast-execution} from \textit{indexamajig}, which is five to six times faster and exhibits a limited degradation of the indexing rate.
 The peak extraction in pyFAI is about as fast as the sparsification, so it can be used online to perform the pre-analysis and provide peaks to NanoPeakCell. 
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
+
+\section{Dicussion}
+Limitation of the current implementation: missing peaks at high Q. Idea: use sigma-Poisson for 
+future work: indexing
 
 \section{Conclusion}
 
