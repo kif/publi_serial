@@ -362,6 +362,8 @@ The mean of this distribution is 100 and the standard deviation is also close to
 With the azimuthal error model, both pixels are a $1\sigma$ from the mean while with the Poissonian error-model, pixels are at $10 \sigma$.  
 This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all their contributing pixels when sigma-clipping was performed, assuming Poissonian noise.
 
+On the other hand, the uncertainties obtained after clipping data based on azimuthal-variance tend to converge slower than those obtained assuming a Poisson distribution (see Figure \ref{fig1}c), so it makes sense to use the azimuthal model for the sigma-clipping and perform subsequent analysis using the Poissonnian error-model. This method is referenced in pyFAI as \textit{hybrid} error-model.
+
 \subsubsection{Clipping threshold}
 can be automatically calculated based on a variation on Chauvenet's criterion \cite{chauvenet} where one would accept to discard only a single pixel in a ring with a signal already following a normal law. 
 Thus, the threshold value is adapted to the $size$ of the distribution, i.e. the number of pixels in each ring (Eq. \ref{chauvenet}), which can reach several thousands and shrinks with iterations.
@@ -608,9 +610,17 @@ Table \ref{crystfel} presents also the indexing performances when using the opti
 The peak extraction in pyFAI is about as fast as the sparsification, so it can be used online to perform the pre-analysis and provide peaks to NanoPeakCell. 
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
 
-\section{Dicussion}
-Limitation of the current implementation: missing peaks at high Q. Idea: use sigma-Poisson for 
-future work: indexing
+\section{Discussion}
+Pros & cons: 
+Better sensitivity to peaks close to the beam-center, makes indexing easier.
+Missing peaks at high Q which could jeopardize the quality of the structure.
+
+
+
+
+Distribution of number of crystal per shoot. 
+Most indexers  
+
 
 \section{Conclusion}
 
