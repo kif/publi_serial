@@ -384,8 +384,7 @@ Pixel values are integers here since the detector is counting events (or a conse
 %it is relevant, but the paper is quite dense already
 
 \section{Application to single crystal diffraction image compression}
-%I explicit here MAcromolecular as we are talking about id29. Remove is superfluous.
-Diffraction images from a single macro-molecular crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
+Diffraction images from a single protein crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
@@ -398,12 +397,10 @@ This cut-off value $n$ (also called $SNR_{pick}$) controls the amount of data to
 \end{center}
 \end{figure}
 
-The storage space is much larger than just the pixel intensity since one needs to store as well also its position. 
+The storage space is much larger than just the pixel intensity since one needs to store as well its position in detector coordinates. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
 
-The following section presents how the sparsification is performed on an example of Lysozyme (HEWL) dataset obtained using rotational data-collection.
-Those data are then densified again to regenerate the data and processed in the standard XDS reduction tool \cite{xds}.
-Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
+
 
 \subsection{Sparsification}
 
@@ -414,7 +411,7 @@ All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in
 A command line tool called `sparsify-Bragg' is available for off-line testing.
 
 All the pixel coordinates and intensities are stored in a HDF5 container \cite{hdf5} following the NeXus  convention \cite{nexus}, together with a snippet of Python code explaining how to rebuild the dataset.
-All sparse datasets (averaged and uncertainties curves, pixel coordinates, ...) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
+All sparse datasets (averaged and uncertainties curves, pixel coordinates, etc..) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
 
 \subsection{Densification}
 Since no crystallographic software package is aware (yet) of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
@@ -426,16 +423,19 @@ Shaded regions are never reconstructed properly and should be masked adequately 
 
 \subsection{Performances}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
-All those factors have been evaluated on a classical sample, egg white lysozyme (HEWL), and rotational data were collected on an Eiger 4M detector \cite{lysozyme}, selected for its similarity in size and performances with the Jungfrau detector. 
+In the following example we present the sparsification of a Lysozyme (HEWL) dataset obtained using a traditional oscillation data-collection. 
+Data were collected on an Eiger 4M detector \cite{lysozyme}, selected for its similarity in size and performances with the Jungfrau detector.
+Those data are then densified again to regenerate the data and processed in XDS \cite{xds}.
+Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
+
 %This reference dataset is the one made publicly available by Dectris \cite{lysozyme} (TODO). 
 
-\subsubsection{Compression ratio:} 
+\subsubsection{Compression ratio} 
 After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
 For conformance with the state of the art, the reference dataset was re-compressed using the bitshuffle-LZ4 algorithm \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
 The maximum theoretical compression ratio for $2\sigma$ is 22x (figure \ref{distribution}, neglecting the storage of the background data and effects of the lossless compression).
-To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack
-to produce an image without peaks. 
+To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack to produce an image without peaks. 
 A background dataset of 1800 such images sparsifies into a 11MB HDF5 file which represents a compression ratio of 136x ! 
 Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compresses great with bitshuffle-LZ4.
 
@@ -478,17 +478,17 @@ The detector outputs the data via $8\times$ 10Gbit/s network links and the stora
 %\end{verbatim}
 
 The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
-an IBM AC922 using two Power9 processors and two (up to four) Nvidia Tesla V100 GPU. 
+an IBM AC922 using two Power9 processors and two (with possibility to upgrade to four) Nvidia Tesla V100 GPU. 
+%add core counts for the single processor GS
 The sequential execution of the code on the GPU takes about 4 ms to process one image and uses one single CPU-core and a quarter of a GPU. 
 In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
 
-\subsubsection{Decompression speed:} 
-The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30 s while the writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
-%maybe explicit that the decompression is for the full dataset and not 30s per frame
+\subsubsection{Decompression speed} 
+The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30 s for the full dataset, while writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
 Densification is thus faster than writing on disk.
-The reading of the input sparse dataset is negligible (<2s).
+The reading time of the input sparse dataset is negligible (<2s).
 
-\subsubsection{Quality of the restored dataset:} 
+\subsubsection{Quality of the restored dataset} 
 The densified dataset was processed via XDS and the summary indicator for the quality of the results are compared with the one coming from the reduction of the original dataset. 
 Since those integrator are measured on integral peaks with $I/\sigma>3$ and the sparsification was performed
 with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{xds_summary}.
@@ -511,6 +511,7 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 \hline
 \end{tabular}
 \end{table}
+%didn't we also refine data against the two datasets for comparison? GS
 
 
 \section{Application to serial crystallography}
@@ -613,7 +614,7 @@ The peak extraction in pyFAI is about as fast as the sparsification, so it can b
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
 
 \section{Discussion}
-Pros & cons: 
+Pros and cons: 
 Better sensitivity to peaks close to the beam-center, makes indexing easier.
 Missing peaks at high Q which could jeopardize the quality of the structure.
 
