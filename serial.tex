@@ -153,7 +153,7 @@ Efficient processing of raw images is thus essential for SSX, with 4 levels of i
 \end{itemize}.
 
 Reconstruction and pedestal correction have been already described in \citeasnoun{lima2}.
-This document will focus on the subsequent steps: peak-finding is addressed in section 2, peak location and indexing in section 3, leaving real-time integration as a challenge for the future.
+This document will focus on the subsequent steps: the detection of signal is addressed in section 2, peak location and indexing in section 3, leaving real-time integration as a challenge for the future.
 %The second step is to collect only pixel values corresponding to diffraction signal.
 %or even an algorithm able to point.
 
@@ -167,9 +167,9 @@ This document will focus on the subsequent steps: peak-finding is addressed in s
 \subsection{Background scattering}
 %be careful & be precise ...
 The simplest implementation of Bragg peaks separation is to assume that the background signal originates from scattering of amorphous material (or from an isotropic powder), giving an isotropic signal that ideally presents only smooth variations.
-For this, the raw signal has to be corrected for dark noise and for any systematic anisotropic effects such as polarization corrections.
-Unlike X-FEL, synchrotron X-ray beam is better characterized in energy and shows little bunch-to-bunch variability.
-All anisotropic correction can be easily modeled and taken into account.
+Before background subtraction, the raw signal has to be corrected for dark noise and for any systematic anisotropic effects such as polarization corrections.
+Unlike X-FEL, synchrotron X-ray beam is better characterized in energy and shows little to none bunch-to-bunch variability.
+All anisotropic correction can be easily modelled and taken into account.
 
 %the first thing is to get it working, the second is to make it fast ... coming from another field of science.
 The initial implementation of signal separation in pyFAI \cite{pdj2013} was relying on a 2D polar transform followed by a median filter in the azimuthal dimension to calculate the amorphous scattering curve.
@@ -181,7 +181,7 @@ Although this method has been successfully used for large dataset analysis \cite
 \item The median filter is computationally heavy since it is required to sort out every azimuthal bin.
 \end{itemize}
 
-The following sections present an efficient way of performing the azimuthal averaging (including the associated uncertainty propagation),  its application to the statistical analysis in polar space and the extraction of background from a diffraction image. 
+We improved on this by developing a new, efficient way of performing the azimuthal averaging (including the associated uncertainty propagation). 
 
 \subsection{Efficient azimuthal averaging and uncertainties evaluation}
 
@@ -195,13 +195,13 @@ I_{cor} = \frac{signal}{norm}  = \frac{I_{raw} - I_{dark}}{F \cdot
 In  equation \ref{norm}, the numerator (referred as \textit{signal} hereafter) is the subtraction of the dark current $I_{dark}$ from the the detector's raw signal $I_{raw}$.
 The denominator (hereafter \textit{norm}) is a normalization factor composed of the product of  $F$:  a factor accounting for the flat-field correction, $\Omega$: the solid angle subtended by a given pixel, $P$: the polarisation correction term and $A$: the detector's apparent efficiency due to the incidence angle of the photon on the detector plane. 
 For integrating detectors, photons with high energy see longer sensor path with larger incidence angles compared to the normal thickness, thus they have a higher detection probability.
-Intensity is also normalized by the incoming flux $I_0$, but since it is independent from the pixel position this correction can be applied when convenient.
+Intensity is also normalized by the incoming flux $I_0$, but being it independent from the pixel position, this correction can be applied when convenient.
 
 \subsubsection{Azimuthal averaging:} 
 
-Historically, the azimuthal averaging was implemented using histograms. 
+Historically, the azimuthal averaging was implemented using histograms.
 Since the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal-bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
-The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector that is simply the flattened view of the diffraction image. 
+The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector containing the flattened view of the diffraction image. 
 The compressed sparse row (CSR) matrix representation is preferred for its efficiency in performing dot products with dense vectors \cite{SpMV}.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
 In the case where pixel splitting is deactivated these coefficients  ($c_{i,r}$) are always one (and zero elsewhere) since each pixel contributes to a single bin.
@@ -213,9 +213,9 @@ The summed signal divided by the summed normalization provides the weight-averag
                         {\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i} 
 \end{equation}  
 
-\subsubsection{Uncertainty evaluation from Poisson law:}
+\subsubsection{Uncertainty evaluation from Poisson distribution}
 Photon counting detectors, such as Eiger detectors, suffer from hardly any error beside the counting uncertainty which is often referred to as Poisson statistics.
-This statistical law states is described by a single parameter $\lambda$ which is related to the mean $\mu$ and standard deviation $\sigma$ from normal distribution by: $\lambda=\mu=\sigma^2$.
+This statistical law is described by a single parameter $\lambda$ which is related to the mean $\mu$ and standard deviation $\sigma$ from a normal distribution by: $\lambda=\mu=\sigma^2$.
 Other sources of noise, like the dark current noise in the case of an integrating detector,  superimpose quadratically on the Poisson noise for integrating detectors, as presented in equation \ref{poisson}:     
 \begin{equation}
 \label{poisson}
@@ -238,12 +238,12 @@ When considering the weighted average, the previous formula becomes:
 sem_r = std_r \frac{\sqrt{\sum\limits_{i \in bin_r} c_{i,r}^2 \cdot norm_i^2}}{\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i}
 \end{equation}
 Thus, the more data points are collected, the more precisely the mean value is known but the uncertainty for a given point remains the same.
-Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used in this document.  
+Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used from here on.  
 
-\subsubsection{Uncertainty evaluation from the variance in a bin:}
+\subsubsection{Uncertainty evaluation from the variance in a bin}
 
-Unlike photon counting detectors, most detectors are not following the Poisson law and therefore the establishment of a formula $\sigma^2 = f(I)$ is not simple, if possible at all. 
-In the case of the Jungfrau detector, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
+Unlike photon counting detectors, most detectors do not follow the Poisson distribution and therefore the definition of a relation $\sigma^2 = f(I)$ is not simple, if possible at all. 
+The integrating Jungfrau detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
 A generic approach is proposed here to measure the variance in every single azimuthal bin.
 
 When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities can be used to estimate the uncertainty. 
@@ -266,7 +266,7 @@ and:
 
 Single pass implementations of variance calculation are faster since they access pixels only once and offer the ability to perform parallel reductions \cite{Blelloch}, i.e. work with blocks of pixels.
 \citeasnoun{variance2018} present a complete review on the topic, which introduces a formalism adapted here for crystallography.
-For example the weight for a pixel is $\omega_i = c_i \cdot norm_i$.
+Assume the weight for a pixel being $\omega_i = c_i \cdot norm_i$.
 If $P$ is a partition of the ensemble of pixels falling into a given azimuthal bin, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  
 be the sum of weights (Eq \ref{omega}), the weighted sum of $V$ (Eq. \ref{Vp}) and the weighted sum of deviation squared (Eq \ref{VVp}) over the partition $P$: 
 \begin{equation}
@@ -295,7 +295,7 @@ The average and the variance are then expressed as:
 \end{equation}
 
 In this formalism, equations \ref{avg} and \ref{eq11} on one side and equations \ref{varA} and \ref{eq12} are actually the same.
-In their review, \citeasnoun{variance2018} present the way to perform the union of two sub-partitions $A$ and $B$ of a larger ensemble which opens the doors to parallel reductions, which are especially efficient when implemented on GPU:
+\citeasnoun{variance2018} present the way to perform the union of two sub-partitions $A$ and $B$ of a larger ensemble which opens the doors to parallel reductions, which are especially efficient when implemented on GPU:
 \begin{equation}
 \label{13}
 \Omega_{A \cup B} =  \Omega_{A} + \Omega_{B} 
@@ -315,9 +315,9 @@ A numerical stability issue can arise from it when $V_A$ or $V_B$ is very small 
 
 \subsection{Histogram intensity }
 
-The figure \ref{fig1}a presents the diffraction from a single crystal of insulin with a Pilatus 6M detector and several curves obtained from azimuthal integration of those data: 
+The figure \ref{fig1}a presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector and several curves obtained from azimuthal integration of those data: 
 figure \ref{fig1}b is the azimuthally integrated signal (blue curve) where Bragg peaks are seen as spikes on top of a smooth background.
-The plot \ref{fig1}c presents the uncertainties measured according to the Poisson law (orange curve, valid since Pilatus are photon counting detectors) 
+The plot \ref{fig1}c presents the uncertainties measured according to the Poisson distribution (orange curve, valid since Pilatus are photon counting detectors) 
 or the deviation in the ring (blue curve). 
 The later presents much larger values since Bragg peaks contribute a lot to the deviation despite they represent few pixels: this highlights the sensitivity of the mean/std to outliers.
 In the plot \ref{fig1}d are presented histogram of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
@@ -336,7 +336,7 @@ Subplot (d) presents the histogram of intensities for two rings at r=87mm and r=
 
 The core idea of the algorithm for background extraction is to model the distribution of background pixels. Unlike Bayesian statistics \cite{Sivia2006} where the cost function is usually tuned to weight less outlier, here, those outliers are simply flagged and discarded.
 Positive outliers can reasonably be assigned to Bragg peaks and negative outliers to shadows or defective pixels. 
-The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal over Noise Ratio (SNR).
+The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal to Noise Ratio (SNR).
 This clipping re-centers the distribution of remaining pixels since the mean is sensitive to outlier values:
 \begin{equation}
 \label{clip}
@@ -344,22 +344,24 @@ This clipping re-centers the distribution of remaining pixels since the mean is 
 \end{equation}
 The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c are the uncertainties calculated after this clipping. 
 After clipping, the average and uncertainties curves have lost most of their spikes, which means that most Bragg peaks and shadowed pixel have been discarded.
- 
+
 \subsection{Sigma-clipping}
 The \textit{sigma-clipping} algorithm consists in applying this outlier rejection several times.
-If the initial distribution was mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability which is likely to look like a normal distribution.
-If the initial distribution was more complicated (typically multi-modal), the necessary larger standard-deviation will prevent most outlier pixels from being rejected, making it conservative in complicated cases.
-This algorithm takes two parameters: the number of iterations and the rejection cut-off (SNR).
+If the initial distribution is mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability, which is likely to look like a normal distribution.
+If the initial distribution is more complicated (typically multi-modal), the necessary larger standard-deviation will prevent most outlier pixels from being rejected, making it more conservative.
+The sigma-clipping algorithm takes two parameters: the number of iterations and the rejection cut-off (SNR).
 %I merged number of iterations and sigma clipping  as closely connected.
 Despite the execution time is proportional to the number of iteration of sigma-clipping, iterations should continue until no more outliers are found, so that the background data can be treated assuming a normal distribution. 
 Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not really an issue for the execution time and the number of actual iteration is usually few (3 is commonly observed).       
 
-\subsubsection{Limits of the Poissonian approach:}
-The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins where exhibiting no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
+\subsubsection{Limits of the Poissonian approach}
+%this will probably be discussed a lot by the reviewers, or completely ignored :P GS
+
+The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins were showing no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
 This artifact was directly linked to the usage of Poisson statistics and can be demonstrated with a simple distribution of 2 pixels, having values 1 and 199. 
 The mean of this distribution is 100 and the standard deviation is also close to 100 while the uncertainty derived from a Poissonian law would  be close to 10 (i.e. $\sqrt{100}$). 
 With the azimuthal error model, both pixels are a $1\sigma$ from the mean while with the Poissonian error-model, pixels are at $10 \sigma$.  
-This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all their contributing pixels when sigma-clipping was performed, assuming Poissonian noise.
+This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all contributing pixels when sigma-clipping was performed assuming Poissonian noise.
 
 On the other hand, the uncertainties obtained after clipping data based on azimuthal-variance tend to converge slower than those obtained assuming a Poisson distribution (see Figure \ref{fig1}c), so it makes sense to use the azimuthal model for the sigma-clipping and perform subsequent analysis using the Poissonnian error-model. This method is referenced in pyFAI as \textit{hybrid} error-model.
 
@@ -377,8 +379,9 @@ Another challenging situation occurs close to the detector corners where the bac
 If the ensemble counts 100 (respectively 1000) pixels, the automatic clipping parameter evaluates to $SNR_{chauv.} = 2.7$ (respectively $SNR_{chauv.} = 3.5$).
 Let's assume the detector has a Poissonian behaviour and the signal is very low: $\lambda = \mu = \sigma^2 = 1$. 
 Any pixels with intensity 4 (respectively 5) or higher are discarded. 
-Pixel values are integers here since the detector is counting events (or a consequence of the Poisson law).
-% could be interesting to show Threshold vs cycle for the example above (if relecant)
+Pixel values are integers here since the detector is counting events (or a consequence of the Poisson distribution).
+% could be interesting to show Threshold vs cycle for the example above (if relevant)
+%it is relevant, but the paper is quite dense already
 
 \section{Application to single crystal diffraction image compression}
 %I explicit here MAcromolecular as we are talking about id29. Remove is superfluous.
