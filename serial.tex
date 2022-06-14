@@ -515,11 +515,11 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 
 
 \section{Application to serial crystallography}
-A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, actually keeping frame which deserve processing. 
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, only keeping the frames which deserve processing. 
 This is the role of the "veto-algorithms".
 
-The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be peaks. 
-For this,  several additional checks are performed on the local neighborhood which is a small square patch (typically 3x3 or 5x5 pixels):
+The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be Bragg peaks. 
+For this,  several additional checks are performed on the local neighbourhood which is a small square patch (typically 3x3 or 5x5 pixels):
 \begin{itemize}
 \item The considered pixel is the maximum of the local neighborhood.
 \item Enough of pixels in the local neighborhood satisfying the SNR condition: typically 2 to 5 pixels out of 9 or 25 are intense enough.
@@ -527,7 +527,7 @@ For this,  several additional checks are performed on the local neighborhood whi
 
 For each peak, the pixel coordinate, the precise centroïd, the sum of data and its propagated deviation are recorded and reported. 
 Those peak-position are saved into a HDF5 file (represented figure \ref{silx}) following the CXI format \cite{cxi} which can be can be read from CrystFEL \cite{CrystFEL}.
-CrystFEL is the swiss-knife of serial-crystallography which allows to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
+CrystFEL is the swiss-army knife of serial-crystallography, allowing to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
 Since indexing is compute intensive, CrystFEL can distributes calculation over several cores or nodes.
 
 \begin{figure}
@@ -537,11 +537,9 @@ Since indexing is compute intensive, CrystFEL can distributes calculation over s
 The left-hand side contains the HDF5 tree structure while the right-hand side presents the default plot with the number of peaks found per frame.}
 \end{figure}
 
-
-The serial crystallography beam-line will use NanoPeakCell \cite{nanopeakcell} for online visualization and feed-back to check if peaks found correspond actually the crystal lattice of the sample.
-
-We will first compare the peak-picking algorithm with some reference implementation on a single frame before
-evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator for the picking.
+%not sure if the jump between previous and current sentence is too sudden GS
+ID29 at the ESRF will use NanoPeakCell \cite{nanopeakcell} for online visualization and feed-back to check if peaks found correspond actually the crystal lattice of the sample.
+We will first compare the peak-picking algorithm with some reference implementation on a single frame before evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator.
 
 \subsection{Comparison of picked peaks}
 Figure \ref{peakfinder} presents the comparison between the original \textit{peakfinder8} described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI on the same Pilatus 6M image, already used in figure \ref{fig1}. 
@@ -554,7 +552,8 @@ Figure \ref{peakfinder} presents the comparison between the original \textit{pea
 
 In figure \ref{peakfinder}, most peak found by both implementation match and superimpose with Bragg-peaks.
 There are more green peaks (found by pyFAI) closer to the beam center while more orange peaks (found by Onda) are located in the outer-shell.
-This plot was made with a minimum SNR of three and a noise level of one since the Pilatus detector is Poissonian.
+This plot was made with a minimum SNR of 3 and a noise level of 1 since the Pilatus detector is Poissonian.
+%no previous specification of which dataset we are using here!! GS
 Peaks were registered if four pixels meet the SNR criterion in a 5x5 pixels patch around the peak.
 Those parameters have been tuned to obtain a comparable number of peaks with both implementations: 290 with pyFAI and 293 with Onda.
 The similarity of those figures allows a direct comparison of peaks found per resolution shell, histogram plotted in figure \ref{peak_per_ring}.
@@ -565,18 +564,18 @@ The similarity of those figures allows a direct comparison of peaks found per re
 \caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each radial-shell is one inverse nanometer in $q-$space.}
 \end{figure}
 
-The analysis of the histogram in figure \ref{peak_per_ring} confirms the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
+The analysis of the histogram in figure \ref{peak_per_ring} confirms that the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
 This is likely due to the curvature of the Debye-Scherrer ring: the original version of peakfinder8 evaluates the variance in a neighborhood defined by some radius around the point of interest and the variance is higher close to the beam-center due to the important curvature of those rings.
 On the opposite, pyFAI knows about this curvature and measures the variance along the ring.
 Points picked by Onda at larger q-values do not look like Bragg-peaks but this could be a side-effect of the parameter tuning to get the same number of peaks for both algorithms.
 
 A word on performances: the Python binding in Onda to the peakfinder8 algorithm from Cheetah runs in 180ms on a high-end server CPU (AMD Epyc 7262) and 300ms on a workstation (Intel Xeon E5-1650 v4). 
 The version available in pyFAI was designed in OpenCL \cite{opencl_khronos, opencl, pyopencl} and runs best on GPUs: 30ms on a AMD Vega 56 and in 10 ms on a Nvidia RTX A5000. 
-Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper than the Epyc processor, shows the same performances (but this CPU has eight cores).
+Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper than the Epyc processor, shows the same performances (but this CPU has eight cores). %curiosity, not sure if relevant for the discussion GS
 
 \subsection{Quality of the peakfinder on serial crystallography data}
 
-The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30B beamline at the ESRF with an Eiger-4M detector.
+The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30B beamline at the ESRF with an Eiger-4M detector.%check BL, could be id13 if it's the data from Coquelle 20014
 A fraction of 1000 frames of the dataset \cite{ssx-Lyso} was used as a probe and was indexed with the \textit{indexamajig} tool from CrystFEL. 
 Since all frames show Bragg-peaks (figure \ref{silx}) the number of indexed frames can be seen as a quality indicator of the peak-picking algorithm used, when all other parameter remain unchanged.
 The indexation was performed with the \textsc{xgandalf} algorithm \cite{xgandalf} with default settings from CrystFEL 0.10.1 and was provided with the cell parameter: tetragonal $a=b=78.77\text{\AA}; c=39.04\text{\AA}; \alpha=\beta=\gamma = 90^o$.
@@ -584,7 +583,7 @@ The table \ref{crystfel} compares the number of frames properly indexed with the
 
 \begin{table}
 \label{crystfel}
-\caption{Indexation rate obtained with \textsc{xgandalf} \cite{xgandalf} from peak positions extracted with different picking algorithms available from CrystFEL \cite{CrystFEL} on a subset of 1000 frames of microcrystals of Lysozyme (HEWL) collected with an Eiger 4M at ESRF ID30b.}
+\caption{Indexation rate obtained with \textsc{xgandalf} \cite{xgandalf} from peak positions extracted with different picking algorithms available from CrystFEL \cite{CrystFEL} on a subset of 1000 frames of microcrystals of Lysozyme (HEWL) collected with an Eiger 4M at ESRF ID30b.}%there is no Eiger on 30B,data could be from 30a3 or id13. Check with Nico GS
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|} 
 \hline
@@ -603,12 +602,14 @@ pyFAI (this contribution) & 497\textperthousand& 9325 s& 492\textperthousand &15
 
 Since the Eiger detector is a counting detector, the global threshold for algorithms \textit{zaef} and \textit{peakfinder8} had to be lowered (to 50, which is the maximum of the background signal on any frame) and the the default SNR value was used for \textit{zaef}, \textit{peakfinder8}. 
 The same SNR value of five was used for \textit{pyFAI}.
+%also because default parameters are tuned for XFEL bragg peak values!
 Default parameters were used for \textit{PeakFinder9} and \textit{RobustPeakFinder} algorithms.
 The reported run-time correspond to the execution time on a single core of an Intel Xeon Gold 6134.
 
 
-The indexing rate obtained with the algorithm from pyFAI is in par with reference implementations like \textit{peakfinder8} or \textit{peakfinder9} available from CrystFEL. 
-Since time is mostly spent in indexing, sets of peaks which are simpler to index present lower run-time since fewer retry were needed. 
+The indexing rate obtained with the algorithm from pyFAI is in par with the reference implementations like \textit{peakfinder8} or \textit{peakfinder9} available from CrystFEL. 
+Since time is mostly spent in indexing, sets of peaks which are simpler to index present lower run-time as fewer retry were needed.
+Retries can be deactivated but they increase significantly the success of indexing. 
 Table \ref{crystfel} presents also the indexing performances when using the option \textit{--xgandalf-fast-execution} from \textit{indexamajig}, which is five to six times faster and exhibits a limited degradation of the indexing rate.
 The peak extraction in pyFAI is about as fast as the sparsification, so it can be used online to perform the pre-analysis and provide peaks to NanoPeakCell. 
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
