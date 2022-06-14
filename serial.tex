@@ -86,11 +86,10 @@ Precise background assessment and application to single crystal image compressio
 
 \begin{abstract}
 
-This contribution is about real-time analysis of diffraction images acquired at high frame-rate (1 kHz) and its applications to macro-molecular serial crystallography.
-A new signal separation algorithm will be presented, able to distinguish amorphous (or powder diffraction) component from the signal originating from larger (single) crystals.
+We present here a real-time analysis of diffraction images acquired at high frame-rate (1 kHz) and its application to macro-molecular serial crystallography.
+The software uses a new signal separation algorithm, able to distinguish the amorphous (or powder diffraction) component from the diffraction signal originating from single crystals. 
 It relies on the ability to work efficiently in azimuthal space and derives from the work performed on pyFAI, the fast azimuthal integration library.
-Two applications are built upon this separation algorithm: a lossy compression algorithm and a peak-picking algorithm.
-Their performances will be assessed and compared to state of the art reference implementations using XDS and CrystFEL.
+Two applications are built upon this separation algorithm: a lossy compression algorithm and a peak-picking algorithm; the performances of both is assessed and compared to state of the art reference implementations using XDS and CrystFEL.
 
 
 \end{abstract}
@@ -103,21 +102,29 @@ Their performances will be assessed and compared to state of the art reference i
      % and \subsubsection's as required.
 
 \section{Introduction}
-The main limitation of rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis, is radiation damage resulting from the exposure to the  beam.
-In macro-molecular crystallography (MX), several crystals are often needed to collect a complete dataset.
-Serial crystallography overcomes radiation damage by exposing each crystal a single time, thus, thousands of them are exposed in a serial way to collect a complete dataset.
+The diffraction quality achievable from a macromolecular crystallography experiment is limited by radiation damage.
+%we can cite here Garman and Weik
+To achieve a complete dataset from a single crystal, data collection happens in a cryo-cooled environment. 
+Exposure time has in any case to be limited due to radiation damage. 
+This issue is even stronger at room temperature.
+In room temperature macro-molecular crystallography (MX), several crystals are often needed to collect a complete dataset without compromising the resolution of the electron density map.
+A more recent approach to solve the radiation damage problem for smaller crystals is serial crystallography.
+First developed at X-ray free electron laser sources (\textsc{xfel}) \cite{Chapman2011, structure_sx} the method is currently applied also at synchrotron sources  \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
 %Crystals are exposed in a serial way to the beam with random orientation, giving making the data-reduction of
 
 \subsection{Serial crystallography using synchrotron sources (SSX)}
 %not sure we need subsections here
 %Serial crystallography is a relatively new technique in structural biology. 
 %It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial %way to the X-ray beam to collect a complete dataset. 
-%This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
+%
 %The serial approach is particularly useful to try to overcome the limitations of radiation damage in %rotational crystallography, particularly in very small crystals.
-
-The technique was first developed for X-ray free electron lasers (\textsc{xfel}) \cite{Chapman2011, structure_sx} and then adapted to be performed at synchrotron light sources \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
-However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and are thus not well adapted to SSX.
+Serial crystallography consists in exposing thousands of small crystals to the synchrotron beam only once in a serial way.
+Diffraction is collected with the most intense X-ray flux possible, in order to extract the most information from a single shot.
+This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
+Those SSX images contain only a fraction of the reciprocal space, as the crystal does not rotate inside the beam.
+To achieve a complete dataset, thousands of frames have to be collected, individually indexed and then merged.
 The high flux needed to collect all diffraction signal from a single crystal within a single exposure makes  the SSX technique a good candidate to benefit from the 4\textsuperscript{th} generation synchrotron sources, such as the new ESRF-EBS update \cite{EBS}.
+However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and thus require modifications to the experimental setup to perfom SSX experiments.
 The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (thanks to multi-layer optics), a high-speed chopper (to separate photon bunches), several sample delivery methods and a fast detector.
 
 \subsection{Jungfrau-4M detector}
@@ -127,26 +134,26 @@ With their absence of read-out noise and their fast speed, the main limitation o
 Unlike photon-counting detectors such as the Eiger detector \cite{Eiger}, the Jungfrau detector \cite{jungfrau2016} is an integrating detector, thus, it is not limited by the count rate, even under the very intense flux expected when recording Bragg-peaks.
 To cope with this photons density, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision of the order of one third of a keV on the higher gain mode, a precision of the order of one photon in the intermediate level and the ability to cope with thousands of photons in the lower gain mode, every millisecond.
 Since the Jungfrau detector is an integrating detector, dark current and flat-field correction have to be applied: every pixel has three, so called, pedestals and three gain values (one for each gain level). 
-However, this large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
+This large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
 The ID29 beam-line features a Jungfrau-4M detector, operating at 1kHz, pace imposed by the chopper and synchronized with the photon bunches from the ESRF.
-At nominal speed, this beam-line is expected to produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
+At nominal speed, the detector will produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
 
 \subsection{Requirements for online data processing}
 
 Serial crystallography is one of the techniques where online data processing is likely to have most impact:
-millions of images are to be collected but too fast to be saved. 
-On the other hand only about 10\% of them will contain diffraction signal and out of them, about half can be indexed and integrated and will actually be used to solve the crystal structure.
-Thus efficient processing of raw images is essential for SSX, with 4 levels of increasing complexity:
+millions of images are to be collected but too fast to be . 
+We expect only about 10\% of the frames to contain diffraction signal and out of them, about half to be indexed, integrated and used to solve the protein structure.
+Efficient processing of raw images is thus essential for SSX, with 4 levels of increasing complexity:
 \begin{itemize}
     \item image reconstruction with pedestal correction
     \item \textit{veto-}algorithm: be able to sieve-out images with poor signal
     \item save only pixels with diffraction signal
-    \item precise location of peak position with indexation
+    \item precise location of peak position with indexation %one or 2 separate points? GS
     \item real-time integration of diffraction peaks
 \end{itemize}.
 
-The first level has been described in \citeasnoun{lima2}.
-This document will focus on subsequent steps: the third point is addressed in section 2 and the fourth in section 3, leaving real-time integration as a challenge for the future.
+Reconstruction and pedestal correction have been already described in \citeasnoun{lima2}.
+This document will focus on the subsequent steps: peak-finding is addressed in section 2, peak location and indexing in section 3, leaving real-time integration as a challenge for the future.
 %The second step is to collect only pixel values corresponding to diffraction signal.
 %or even an algorithm able to point.
 
@@ -155,14 +162,6 @@ This document will focus on subsequent steps: the third point is addressed in se
 
 
 
-%Multiple challenges are present, in particular partiality and low completeness of data collected for each individual crystal.
-%For this reason, careful and precise location of Bragg peaks is essential.
-
-
-
-%The document is sub-divided like 
-%Section 2 presents an efficient way to separate Bragg-peaks from background, this technique is used in section 3 to compress MX data using sparsification of data. 
-%The data 
 
 \section{Algorithm for the separation of the amorphous background from the Bragg peaks}
 \subsection{Background scattering}
