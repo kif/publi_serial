@@ -86,11 +86,10 @@ Precise background assessment and application to single crystal image compressio
 
 \begin{abstract}
 
-This contribution is about real-time analysis of diffraction images acquired at high frame-rate (1 kHz) and its applications to macro-molecular serial crystallography.
-A new signal separation algorithm will be presented, able to distinguish amorphous (or powder diffraction) component from the signal originating from larger (single) crystals.
+We present here a real-time analysis of diffraction images acquired at high frame-rate (1 kHz) and its application to macro-molecular serial crystallography.
+The software uses a new signal separation algorithm, able to distinguish the amorphous (or powder diffraction) component from the diffraction signal originating from single crystals. 
 It relies on the ability to work efficiently in azimuthal space and derives from the work performed on pyFAI, the fast azimuthal integration library.
-Two applications are built upon this separation algorithm: a lossy compression algorithm and a peak-picking algorithm.
-Their performances will be assessed and compared to state of the art reference implementations using XDS and CrystFEL.
+Two applications are built upon this separation algorithm: a lossy compression algorithm and a peak-picking algorithm; the performances of both is assessed and compared to state of the art reference implementations using XDS and CrystFEL.
 
 
 \end{abstract}
@@ -103,21 +102,29 @@ Their performances will be assessed and compared to state of the art reference i
      % and \subsubsection's as required.
 
 \section{Introduction}
-The main limitation of rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis, is radiation damage resulting from the exposure to the  beam.
-In macro-molecular crystallography (MX), several crystals are often needed to collect a complete dataset.
-Serial crystallography overcomes radiation damage by exposing each crystal a single time, thus, thousands of them are exposed in a serial way to collect a complete dataset.
+The diffraction quality achievable from a macromolecular crystallography experiment is limited by radiation damage.
+%we can cite here Garman and Weik
+To achieve a complete dataset from a single crystal, data collection happens in a cryo-cooled environment. 
+Exposure time has in any case to be limited due to radiation damage. 
+This issue is even stronger at room temperature.
+In room temperature macro-molecular crystallography (MX), several crystals are often needed to collect a complete dataset without compromising the resolution of the electron density map.
+A more recent approach to solve the radiation damage problem for smaller crystals is serial crystallography.
+First developed at X-ray free electron laser sources (\textsc{xfel}) \cite{Chapman2011, structure_sx} the method is currently applied also at synchrotron sources  \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
 %Crystals are exposed in a serial way to the beam with random orientation, giving making the data-reduction of
 
 \subsection{Serial crystallography using synchrotron sources (SSX)}
 %not sure we need subsections here
 %Serial crystallography is a relatively new technique in structural biology. 
 %It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial %way to the X-ray beam to collect a complete dataset. 
-%This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
+%
 %The serial approach is particularly useful to try to overcome the limitations of radiation damage in %rotational crystallography, particularly in very small crystals.
-
-The technique was first developed for X-ray free electron lasers (\textsc{xfel}) \cite{Chapman2011, structure_sx} and then adapted to be performed at synchrotron light sources \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
-However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and are thus not well adapted to SSX.
+Serial crystallography consists in exposing thousands of small crystals to the synchrotron beam only once in a serial way.
+Diffraction is collected with the most intense X-ray flux possible, in order to extract the most information from a single shot.
+This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
+Those SSX images contain only a fraction of the reciprocal space, as the crystal does not rotate inside the beam.
+To achieve a complete dataset, thousands of frames have to be collected, individually indexed and then merged.
 The high flux needed to collect all diffraction signal from a single crystal within a single exposure makes  the SSX technique a good candidate to benefit from the 4\textsuperscript{th} generation synchrotron sources, such as the new ESRF-EBS update \cite{EBS}.
+However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and thus require modifications to the experimental setup to perfom SSX experiments.
 The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (thanks to multi-layer optics), a high-speed chopper (to separate photon bunches), several sample delivery methods and a fast detector.
 
 \subsection{Jungfrau-4M detector}
@@ -127,26 +134,26 @@ With their absence of read-out noise and their fast speed, the main limitation o
 Unlike photon-counting detectors such as the Eiger detector \cite{Eiger}, the Jungfrau detector \cite{jungfrau2016} is an integrating detector, thus, it is not limited by the count rate, even under the very intense flux expected when recording Bragg-peaks.
 To cope with this photons density, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision of the order of one third of a keV on the higher gain mode, a precision of the order of one photon in the intermediate level and the ability to cope with thousands of photons in the lower gain mode, every millisecond.
 Since the Jungfrau detector is an integrating detector, dark current and flat-field correction have to be applied: every pixel has three, so called, pedestals and three gain values (one for each gain level). 
-However, this large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
+This large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
 The ID29 beam-line features a Jungfrau-4M detector, operating at 1kHz, pace imposed by the chopper and synchronized with the photon bunches from the ESRF.
-At nominal speed, this beam-line is expected to produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
+At nominal speed, the detector will produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
 
 \subsection{Requirements for online data processing}
 
 Serial crystallography is one of the techniques where online data processing is likely to have most impact:
 millions of images are to be collected but too fast to be saved. 
-On the other hand only about 10\% of them will contain diffraction signal and out of them, about half can be indexed and integrated and will actually be used to solve the crystal structure.
-Thus efficient processing of raw images is essential for SSX, with 4 levels of increasing complexity:
+We expect only about 10\% of the frames to contain diffraction signal and out of them, about half to be indexed, integrated and used to solve the protein structure.
+Efficient processing of raw images is thus essential for SSX, with 4 levels of increasing complexity:
 \begin{itemize}
     \item image reconstruction with pedestal correction
     \item \textit{veto-}algorithm: be able to sieve-out images with poor signal
     \item save only pixels with diffraction signal
-    \item precise location of peak position with indexation
+    \item precise location of peak position with indexation %one or 2 separate points? GS
     \item real-time integration of diffraction peaks
 \end{itemize}.
 
-The first level has been described in \citeasnoun{lima2}.
-This document will focus on subsequent steps: the third point is addressed in section 2 and the fourth in section 3, leaving real-time integration as a challenge for the future.
+Reconstruction and pedestal correction have been already described in \citeasnoun{lima2}.
+This document will focus on the subsequent steps: the detection of signal is addressed in section 2, peak location and indexing in section 3, leaving real-time integration as a challenge for the future.
 %The second step is to collect only pixel values corresponding to diffraction signal.
 %or even an algorithm able to point.
 
@@ -155,22 +162,14 @@ This document will focus on subsequent steps: the third point is addressed in se
 
 
 
-%Multiple challenges are present, in particular partiality and low completeness of data collected for each individual crystal.
-%For this reason, careful and precise location of Bragg peaks is essential.
-
-
-
-%The document is sub-divided like 
-%Section 2 presents an efficient way to separate Bragg-peaks from background, this technique is used in section 3 to compress MX data using sparsification of data. 
-%The data 
 
 \section{Algorithm for the separation of the amorphous background from the Bragg peaks}
 \subsection{Background scattering}
 %be careful & be precise ...
 The simplest implementation of Bragg peaks separation is to assume that the background signal originates from scattering of amorphous material (or from an isotropic powder), giving an isotropic signal that ideally presents only smooth variations.
-For this, the raw signal has to be corrected for dark noise and for any systematic anisotropic effects such as polarization corrections.
-Unlike X-FEL, synchrotron X-ray beam is better characterized in energy and shows little bunch-to-bunch variability.
-All anisotropic correction can be easily modeled and taken into account.
+Before background subtraction, the raw signal has to be corrected for dark noise and for any systematic anisotropic effects such as polarization corrections.
+Unlike X-FEL, synchrotron X-ray beam is better characterized in energy and shows little to none bunch-to-bunch variability.
+All anisotropic correction can be easily modelled and taken into account.
 
 %the first thing is to get it working, the second is to make it fast ... coming from another field of science.
 The initial implementation of signal separation in pyFAI \cite{pdj2013} was relying on a 2D polar transform followed by a median filter in the azimuthal dimension to calculate the amorphous scattering curve.
@@ -182,7 +181,7 @@ Although this method has been successfully used for large dataset analysis \cite
 \item The median filter is computationally heavy since it is required to sort out every azimuthal bin.
 \end{itemize}
 
-The following sections present an efficient way of performing the azimuthal averaging (including the associated uncertainty propagation),  its application to the statistical analysis in polar space and the extraction of background from a diffraction image. 
+We improved on this by developing a new, efficient way of performing the azimuthal averaging (including the associated uncertainty propagation). 
 
 \subsection{Efficient azimuthal averaging and uncertainties evaluation}
 
@@ -196,13 +195,13 @@ I_{cor} = \frac{signal}{norm}  = \frac{I_{raw} - I_{dark}}{F \cdot
 In  equation \ref{norm}, the numerator (referred as \textit{signal} hereafter) is the subtraction of the dark current $I_{dark}$ from the the detector's raw signal $I_{raw}$.
 The denominator (hereafter \textit{norm}) is a normalization factor composed of the product of  $F$:  a factor accounting for the flat-field correction, $\Omega$: the solid angle subtended by a given pixel, $P$: the polarisation correction term and $A$: the detector's apparent efficiency due to the incidence angle of the photon on the detector plane. 
 For integrating detectors, photons with high energy see longer sensor path with larger incidence angles compared to the normal thickness, thus they have a higher detection probability.
-Intensity is also normalized by the incoming flux $I_0$, but since it is independent from the pixel position this correction can be applied when convenient.
+Intensity is also normalized by the incoming flux $I_0$, but being it independent from the pixel position, this correction can be applied when convenient.
 
 \subsubsection{Azimuthal averaging:} 
 
-Historically, the azimuthal averaging was implemented using histograms. 
+Historically, the azimuthal averaging was implemented using histograms.
 Since the geometry of the experimental setup is fixed during the acquisition, a look-up table listing all pixels contributing to each  azimuthal-bin can be built and used to speed-up calculations \cite{pyFAI_gpu}.
-The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector that is simply the flattened view of the diffraction image. 
+The azimuthal transformation being a linear transformation, it can be implemented as a matrix multiplication, with a sparse-matrix representing the transformation and a dense vector containing the flattened view of the diffraction image. 
 The compressed sparse row (CSR) matrix representation is preferred for its efficiency in performing dot products with dense vectors \cite{SpMV}.
 The coefficients $c_{i,r}$ of the matrix are the fraction of area of a pixel $i$ falling into the radial bin $r$.
 In the case where pixel splitting is deactivated these coefficients  ($c_{i,r}$) are always one (and zero elsewhere) since each pixel contributes to a single bin.
@@ -214,9 +213,9 @@ The summed signal divided by the summed normalization provides the weight-averag
                         {\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i} 
 \end{equation}  
 
-\subsubsection{Uncertainty evaluation from Poisson law:}
+\subsubsection{Uncertainty evaluation from Poisson distribution}
 Photon counting detectors, such as Eiger detectors, suffer from hardly any error beside the counting uncertainty which is often referred to as Poisson statistics.
-This statistical law states is described by a single parameter $\lambda$ which is related to the mean $\mu$ and standard deviation $\sigma$ from normal distribution by: $\lambda=\mu=\sigma^2$.
+This statistical law is described by a single parameter $\lambda$ which is related to the mean $\mu$ and standard deviation $\sigma$ from a normal distribution by: $\lambda=\mu=\sigma^2$.
 Other sources of noise, like the dark current noise in the case of an integrating detector,  superimpose quadratically on the Poisson noise for integrating detectors, as presented in equation \ref{poisson}:     
 \begin{equation}
 \label{poisson}
@@ -239,12 +238,12 @@ When considering the weighted average, the previous formula becomes:
 sem_r = std_r \frac{\sqrt{\sum\limits_{i \in bin_r} c_{i,r}^2 \cdot norm_i^2}}{\sum\limits_{i \in bin_r} c_{i,r} \cdot norm_i}
 \end{equation}
 Thus, the more data points are collected, the more precisely the mean value is known but the uncertainty for a given point remains the same.
-Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used in this document.  
+Since this document focuses on the uncertainties of pixel values, the \textit{standard deviation} will systematically be used from here on.  
 
-\subsubsection{Uncertainty evaluation from the variance in a bin:}
+\subsubsection{Uncertainty evaluation from the variance in a bin}
 
-Unlike photon counting detectors, most detectors are not following the Poisson law and therefore the establishment of a formula $\sigma^2 = f(I)$ is not simple, if possible at all. 
-In the case of the Jungfrau detector, this integrating detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
+Unlike photon counting detectors, most detectors do not follow the Poisson distribution and therefore the definition of a relation $\sigma^2 = f(I)$ is not simple, if possible at all. 
+The integrating Jungfrau detector has a complex gain switching mechanism \cite{jungfrau_PSI} which makes this equation complicated.
 A generic approach is proposed here to measure the variance in every single azimuthal bin.
 
 When considering the diffraction of an isotropic compound (liquid, amorphous or perfect powder), all pixels falling into the same radial bin should see the same flux of photons and the deviation to their intensities can be used to estimate the uncertainty. 
@@ -267,7 +266,7 @@ and:
 
 Single pass implementations of variance calculation are faster since they access pixels only once and offer the ability to perform parallel reductions \cite{Blelloch}, i.e. work with blocks of pixels.
 \citeasnoun{variance2018} present a complete review on the topic, which introduces a formalism adapted here for crystallography.
-For example the weight for a pixel is $\omega_i = c_i \cdot norm_i$.
+Assume the weight for a pixel being $\omega_i = c_i \cdot norm_i$.
 If $P$ is a partition of the ensemble of pixels falling into a given azimuthal bin, let $\Omega_{P}$, $V_{P}$ and $VV_{P}$  
 be the sum of weights (Eq \ref{omega}), the weighted sum of $V$ (Eq. \ref{Vp}) and the weighted sum of deviation squared (Eq \ref{VVp}) over the partition $P$: 
 \begin{equation}
@@ -296,7 +295,7 @@ The average and the variance are then expressed as:
 \end{equation}
 
 In this formalism, equations \ref{avg} and \ref{eq11} on one side and equations \ref{varA} and \ref{eq12} are actually the same.
-In their review, \citeasnoun{variance2018} present the way to perform the union of two sub-partitions $A$ and $B$ of a larger ensemble which opens the doors to parallel reductions, which are especially efficient when implemented on GPU:
+\citeasnoun{variance2018} present the way to perform the union of two sub-partitions $A$ and $B$ of a larger ensemble which opens the doors to parallel reductions, which are especially efficient when implemented on GPU:
 \begin{equation}
 \label{13}
 \Omega_{A \cup B} =  \Omega_{A} + \Omega_{B} 
@@ -316,9 +315,9 @@ A numerical stability issue can arise from it when $V_A$ or $V_B$ is very small 
 
 \subsection{Histogram intensity }
 
-The figure \ref{fig1}a presents the diffraction from a single crystal of insulin with a Pilatus 6M detector and several curves obtained from azimuthal integration of those data: 
+The figure \ref{fig1}a presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector and several curves obtained from azimuthal integration of those data: 
 figure \ref{fig1}b is the azimuthally integrated signal (blue curve) where Bragg peaks are seen as spikes on top of a smooth background.
-The plot \ref{fig1}c presents the uncertainties measured according to the Poisson law (orange curve, valid since Pilatus are photon counting detectors) 
+The plot \ref{fig1}c presents the uncertainties measured according to the Poisson distribution (orange curve, valid since Pilatus are photon counting detectors) 
 or the deviation in the ring (blue curve). 
 The later presents much larger values since Bragg peaks contribute a lot to the deviation despite they represent few pixels: this highlights the sensitivity of the mean/std to outliers.
 In the plot \ref{fig1}d are presented histogram of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
@@ -337,7 +336,7 @@ Subplot (d) presents the histogram of intensities for two rings at r=87mm and r=
 
 The core idea of the algorithm for background extraction is to model the distribution of background pixels. Unlike Bayesian statistics \cite{Sivia2006} where the cost function is usually tuned to weight less outlier, here, those outliers are simply flagged and discarded.
 Positive outliers can reasonably be assigned to Bragg peaks and negative outliers to shadows or defective pixels. 
-The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal over Noise Ratio (SNR).
+The distribution is recalculated  after discarding pixels for which intensity differ from the average value by more than $n$ times the standard deviation (Eq. \ref{clip}), where $n$ is called the Signal to Noise Ratio (SNR).
 This clipping re-centers the distribution of remaining pixels since the mean is sensitive to outlier values:
 \begin{equation}
 \label{clip}
@@ -345,22 +344,24 @@ This clipping re-centers the distribution of remaining pixels since the mean is 
 \end{equation}
 The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c are the uncertainties calculated after this clipping. 
 After clipping, the average and uncertainties curves have lost most of their spikes, which means that most Bragg peaks and shadowed pixel have been discarded.
- 
+
 \subsection{Sigma-clipping}
 The \textit{sigma-clipping} algorithm consists in applying this outlier rejection several times.
-If the initial distribution was mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability which is likely to look like a normal distribution.
-If the initial distribution was more complicated (typically multi-modal), the necessary larger standard-deviation will prevent most outlier pixels from being rejected, making it conservative in complicated cases.
-This algorithm takes two parameters: the number of iterations and the rejection cut-off (SNR).
+If the initial distribution is mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability, which is likely to look like a normal distribution.
+If the initial distribution is more complicated (typically multi-modal), the necessary larger standard-deviation will prevent most outlier pixels from being rejected, making it more conservative.
+The sigma-clipping algorithm takes two parameters: the number of iterations and the rejection cut-off (SNR).
 %I merged number of iterations and sigma clipping  as closely connected.
 Despite the execution time is proportional to the number of iteration of sigma-clipping, iterations should continue until no more outliers are found, so that the background data can be treated assuming a normal distribution. 
 Since the loop exits as soon as no more outliers were discarded at the clipping step, having an arbitrary large number of iteration is not really an issue for the execution time and the number of actual iteration is usually few (3 is commonly observed).       
 
-\subsubsection{Limits of the Poissonian approach:}
-The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins where exhibiting no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
+\subsubsection{Limits of the Poissonian approach}
+%this will probably be discussed a lot by the reviewers, or completely ignored :P GS
+
+The evaluation of uncertainties based on the variance over a radial shell has been developed after numerical artifacts were discovered when performing sigma-clipping with a Poissonian approach. Some azimuthal bins were showing no pixel contribution at all and thus appeared without any mean nor uncertainties, jeopardizing the complete background extraction algorithm. 
 This artifact was directly linked to the usage of Poisson statistics and can be demonstrated with a simple distribution of 2 pixels, having values 1 and 199. 
 The mean of this distribution is 100 and the standard deviation is also close to 100 while the uncertainty derived from a Poissonian law would  be close to 10 (i.e. $\sqrt{100}$). 
 With the azimuthal error model, both pixels are a $1\sigma$ from the mean while with the Poissonian error-model, pixels are at $10 \sigma$.  
-This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all their contributing pixels when sigma-clipping was performed, assuming Poissonian noise.
+This explains why bins featuring strong Bragg-peaks on top low background got completely emptied from all contributing pixels when sigma-clipping was performed assuming Poissonian noise.
 
 On the other hand, the uncertainties obtained after clipping data based on azimuthal-variance tend to converge slower than those obtained assuming a Poisson distribution (see Figure \ref{fig1}c), so it makes sense to use the azimuthal model for the sigma-clipping and perform subsequent analysis using the Poissonnian error-model. This method is referenced in pyFAI as \textit{hybrid} error-model.
 
@@ -378,12 +379,12 @@ Another challenging situation occurs close to the detector corners where the bac
 If the ensemble counts 100 (respectively 1000) pixels, the automatic clipping parameter evaluates to $SNR_{chauv.} = 2.7$ (respectively $SNR_{chauv.} = 3.5$).
 Let's assume the detector has a Poissonian behaviour and the signal is very low: $\lambda = \mu = \sigma^2 = 1$. 
 Any pixels with intensity 4 (respectively 5) or higher are discarded. 
-Pixel values are integers here since the detector is counting events (or a consequence of the Poisson law).
-% could be interesting to show Threshold vs cycle for the example above (if relecant)
+Pixel values are integers here since the detector is counting events (or a consequence of the Poisson distribution).
+% could be interesting to show Threshold vs cycle for the example above (if relevant)
+%it is relevant, but the paper is quite dense already
 
 \section{Application to single crystal diffraction image compression}
-%I explicit here MAcromolecular as we are talking about id29. Remove is superfluous.
-Diffraction images from a single macro-molecular crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
+Diffraction images from a single protein crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
 
 This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
@@ -396,12 +397,10 @@ This cut-off value $n$ (also called $SNR_{pick}$) controls the amount of data to
 \end{center}
 \end{figure}
 
-The storage space is much larger than just the pixel intensity since one needs to store as well also its position. 
+The storage space is much larger than just the pixel intensity since one needs to store as well its position in detector coordinates. 
 Moreover, to be able to regenerate the background, the averaged and uncertainties curves needs to be stored.
 
-The following section presents how the sparsification is performed on an example of Lysozyme (HEWL) dataset obtained using rotational data-collection.
-Those data are then densified again to regenerate the data and processed in the standard XDS reduction tool \cite{xds}.
-Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
+
 
 \subsection{Sparsification}
 
@@ -412,7 +411,7 @@ All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in
 A command line tool called `sparsify-Bragg' is available for off-line testing.
 
 All the pixel coordinates and intensities are stored in a HDF5 container \cite{hdf5} following the NeXus  convention \cite{nexus}, together with a snippet of Python code explaining how to rebuild the dataset.
-All sparse datasets (averaged and uncertainties curves, pixel coordinates, ...) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
+All sparse datasets (averaged and uncertainties curves, pixel coordinates, etc..) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
 
 \subsection{Densification}
 Since no crystallographic software package is aware (yet) of this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
@@ -424,16 +423,19 @@ Shaded regions are never reconstructed properly and should be masked adequately 
 
 \subsection{Performances}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
-All those factors have been evaluated on a classical sample, egg white lysozyme (HEWL), and rotational data were collected on an Eiger 4M detector \cite{lysozyme}, selected for its similarity in size and performances with the Jungfrau detector. 
+In the following example we present the sparsification of a Lysozyme (HEWL) dataset obtained using a traditional oscillation data-collection. 
+Data were collected on an Eiger 4M detector \cite{lysozyme}, selected for its similarity in size and performances with the Jungfrau detector.
+Those data are then densified again to regenerate the data and processed in XDS \cite{xds}.
+Data quality indicators are finally compared between the original dataset and the one which went through the lossy compression presented here.
+
 %This reference dataset is the one made publicly available by Dectris \cite{lysozyme} (TODO). 
 
-\subsubsection{Compression ratio:} 
+\subsubsection{Compression ratio} 
 After sparsification (picking cut-off: $2\sigma$, error-model: Poisonnian), the dataset still weights 103MB which represents a 15x compression ratio compared to the standard procedure.
 For conformance with the state of the art, the reference dataset was re-compressed using the bitshuffle-LZ4 algorithm \cite{bitshuffle}, for which the 1800 frames weight 1500MB (instead of the 5000GB of the original files compressed in LZ4).
 
 The maximum theoretical compression ratio for $2\sigma$ is 22x (figure \ref{distribution}, neglecting the storage of the background data and effects of the lossless compression).
-To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack
-to produce an image without peaks. 
+To evaluate the effective maximal compression ratio, the dataset was median-filtered along the image stack to produce an image without peaks. 
 A background dataset of 1800 such images sparsifies into a 11MB HDF5 file which represents a compression ratio of 136x ! 
 Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compresses great with bitshuffle-LZ4.
 
@@ -476,17 +478,17 @@ The detector outputs the data via $8\times$ 10Gbit/s network links and the stora
 %\end{verbatim}
 
 The compression speed has been measured on the computer designed for online data-reduction of the Jungfrau detector \cite{sri2021}: 
-an IBM AC922 using two Power9 processors and two (up to four) Nvidia Tesla V100 GPU. 
+an IBM AC922 using two Power9 processors and two (with possibility to upgrade to four) Nvidia Tesla V100 GPU. 
+%add core counts for the single processor GS
 The sequential execution of the code on the GPU takes about 4 ms to process one image and uses one single CPU-core and a quarter of a GPU. 
 In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the Jungfrau is 1kHz.
 
-\subsubsection{Decompression speed:} 
-The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30 s while the writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
-%maybe explicit that the decompression is for the full dataset and not 30s per frame
+\subsubsection{Decompression speed} 
+The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30 s for the full dataset, while writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
 Densification is thus faster than writing on disk.
-The reading of the input sparse dataset is negligible (<2s).
+The reading time of the input sparse dataset is negligible (<2s).
 
-\subsubsection{Quality of the restored dataset:} 
+\subsubsection{Quality of the restored dataset} 
 The densified dataset was processed via XDS and the summary indicator for the quality of the results are compared with the one coming from the reduction of the original dataset. 
 Since those integrator are measured on integral peaks with $I/\sigma>3$ and the sparsification was performed
 with a cut-off of 2, those result should be almost unaffected, which is confirmed in the table \ref{xds_summary}.
@@ -509,14 +511,15 @@ $<I/\sigma>$               & 25.80 & 5.39 & 10.52  & 26.33& 4.09 & 10.17 \\
 \hline
 \end{tabular}
 \end{table}
+%didn't we also refine data against the two datasets for comparison? GS
 
 
 \section{Application to serial crystallography}
-A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, actually keeping frame which deserve processing. 
+A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, only keeping the frames which deserve processing. 
 This is the role of the "veto-algorithms".
 
-The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be peaks. 
-For this,  several additional checks are performed on the local neighborhood which is a small square patch (typically 3x3 or 5x5 pixels):
+The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be Bragg peaks. 
+For this,  several additional checks are performed on the local neighbourhood which is a small square patch (typically 3x3 or 5x5 pixels):
 \begin{itemize}
 \item The considered pixel is the maximum of the local neighborhood.
 \item Enough of pixels in the local neighborhood satisfying the SNR condition: typically 2 to 5 pixels out of 9 or 25 are intense enough.
@@ -524,7 +527,7 @@ For this,  several additional checks are performed on the local neighborhood whi
 
 For each peak, the pixel coordinate, the precise centroïd, the sum of data and its propagated deviation are recorded and reported. 
 Those peak-position are saved into a HDF5 file (represented figure \ref{silx}) following the CXI format \cite{cxi} which can be can be read from CrystFEL \cite{CrystFEL}.
-CrystFEL is the swiss-knife of serial-crystallography which allows to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
+CrystFEL is the swiss-army knife of serial-crystallography, allowing to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
 Since indexing is compute intensive, CrystFEL can distributes calculation over several cores or nodes.
 
 \begin{figure}
@@ -534,11 +537,9 @@ Since indexing is compute intensive, CrystFEL can distributes calculation over s
 The left-hand side contains the HDF5 tree structure while the right-hand side presents the default plot with the number of peaks found per frame.}
 \end{figure}
 
-
-The serial crystallography beam-line will use NanoPeakCell \cite{nanopeakcell} for online visualization and feed-back to check if peaks found correspond actually the crystal lattice of the sample.
-
-We will first compare the peak-picking algorithm with some reference implementation on a single frame before
-evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator for the picking.
+%not sure if the jump between previous and current sentence is too sudden GS
+ID29 at the ESRF will use NanoPeakCell \cite{nanopeakcell} for online visualization and feed-back to check if peaks found correspond actually the crystal lattice of the sample.
+We will first compare the peak-picking algorithm with some reference implementation on a single frame before evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator.
 
 \subsection{Comparison of picked peaks}
 Figure \ref{peakfinder} presents the comparison between the original \textit{peakfinder8} described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI on the same Pilatus 6M image, already used in figure \ref{fig1}. 
@@ -551,7 +552,8 @@ Figure \ref{peakfinder} presents the comparison between the original \textit{pea
 
 In figure \ref{peakfinder}, most peak found by both implementation match and superimpose with Bragg-peaks.
 There are more green peaks (found by pyFAI) closer to the beam center while more orange peaks (found by Onda) are located in the outer-shell.
-This plot was made with a minimum SNR of three and a noise level of one since the Pilatus detector is Poissonian.
+This plot was made with a minimum SNR of 3 and a noise level of 1 since the Pilatus detector is Poissonian.
+%no previous specification of which dataset we are using here!! GS
 Peaks were registered if four pixels meet the SNR criterion in a 5x5 pixels patch around the peak.
 Those parameters have been tuned to obtain a comparable number of peaks with both implementations: 290 with pyFAI and 293 with Onda.
 The similarity of those figures allows a direct comparison of peaks found per resolution shell, histogram plotted in figure \ref{peak_per_ring}.
@@ -562,18 +564,18 @@ The similarity of those figures allows a direct comparison of peaks found per re
 \caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each radial-shell is one inverse nanometer in $q-$space.}
 \end{figure}
 
-The analysis of the histogram in figure \ref{peak_per_ring} confirms the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
+The analysis of the histogram in figure \ref{peak_per_ring} confirms that the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
 This is likely due to the curvature of the Debye-Scherrer ring: the original version of peakfinder8 evaluates the variance in a neighborhood defined by some radius around the point of interest and the variance is higher close to the beam-center due to the important curvature of those rings.
 On the opposite, pyFAI knows about this curvature and measures the variance along the ring.
 Points picked by Onda at larger q-values do not look like Bragg-peaks but this could be a side-effect of the parameter tuning to get the same number of peaks for both algorithms.
 
 A word on performances: the Python binding in Onda to the peakfinder8 algorithm from Cheetah runs in 180ms on a high-end server CPU (AMD Epyc 7262) and 300ms on a workstation (Intel Xeon E5-1650 v4). 
 The version available in pyFAI was designed in OpenCL \cite{opencl_khronos, opencl, pyopencl} and runs best on GPUs: 30ms on a AMD Vega 56 and in 10 ms on a Nvidia RTX A5000. 
-Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper than the Epyc processor, shows the same performances (but this CPU has eight cores).
+Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper than the Epyc processor, shows the same performances (but this CPU has eight cores). %curiosity, not sure if relevant for the discussion GS
 
 \subsection{Quality of the peakfinder on serial crystallography data}
 
-The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30B beamline at the ESRF with an Eiger-4M detector.
+The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30B beamline at the ESRF with an Eiger-4M detector.%check BL, could be id13 if it's the data from Coquelle 20014
 A fraction of 1000 frames of the dataset \cite{ssx-Lyso} was used as a probe and was indexed with the \textit{indexamajig} tool from CrystFEL. 
 Since all frames show Bragg-peaks (figure \ref{silx}) the number of indexed frames can be seen as a quality indicator of the peak-picking algorithm used, when all other parameter remain unchanged.
 The indexation was performed with the \textsc{xgandalf} algorithm \cite{xgandalf} with default settings from CrystFEL 0.10.1 and was provided with the cell parameter: tetragonal $a=b=78.77\text{\AA}; c=39.04\text{\AA}; \alpha=\beta=\gamma = 90^o$.
@@ -581,7 +583,7 @@ The table \ref{crystfel} compares the number of frames properly indexed with the
 
 \begin{table}
 \label{crystfel}
-\caption{Indexation rate obtained with \textsc{xgandalf} \cite{xgandalf} from peak positions extracted with different picking algorithms available from CrystFEL \cite{CrystFEL} on a subset of 1000 frames of microcrystals of Lysozyme (HEWL) collected with an Eiger 4M at ESRF ID30b.}
+\caption{Indexation rate obtained with \textsc{xgandalf} \cite{xgandalf} from peak positions extracted with different picking algorithms available from CrystFEL \cite{CrystFEL} on a subset of 1000 frames of microcrystals of Lysozyme (HEWL) collected with an Eiger 4M at ESRF ID30b.}%there is no Eiger on 30B,data could be from 30a3 or id13. Check with Nico GS
 \begin{center}
 \begin{tabular}{|c|c|c|c|c|} 
 \hline
@@ -600,18 +602,20 @@ pyFAI (this contribution) & 497\textperthousand& 9325 s& 492\textperthousand &15
 
 Since the Eiger detector is a counting detector, the global threshold for algorithms \textit{zaef} and \textit{peakfinder8} had to be lowered (to 50, which is the maximum of the background signal on any frame) and the the default SNR value was used for \textit{zaef}, \textit{peakfinder8}. 
 The same SNR value of five was used for \textit{pyFAI}.
+%also because default parameters are tuned for XFEL bragg peak values!
 Default parameters were used for \textit{PeakFinder9} and \textit{RobustPeakFinder} algorithms.
 The reported run-time correspond to the execution time on a single core of an Intel Xeon Gold 6134.
 
 
-The indexing rate obtained with the algorithm from pyFAI is in par with reference implementations like \textit{peakfinder8} or \textit{peakfinder9} available from CrystFEL. 
-Since time is mostly spent in indexing, sets of peaks which are simpler to index present lower run-time since fewer retry were needed. 
+The indexing rate obtained with the algorithm from pyFAI is in par with the reference implementations like \textit{peakfinder8} or \textit{peakfinder9} available from CrystFEL. 
+Since time is mostly spent in indexing, sets of peaks which are simpler to index present lower run-time as fewer retry were needed.
+Retries can be deactivated but they increase significantly the success of indexing. 
 Table \ref{crystfel} presents also the indexing performances when using the option \textit{--xgandalf-fast-execution} from \textit{indexamajig}, which is five to six times faster and exhibits a limited degradation of the indexing rate.
 The peak extraction in pyFAI is about as fast as the sparsification, so it can be used online to perform the pre-analysis and provide peaks to NanoPeakCell. 
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
 
 \section{Discussion}
-Pros & cons: 
+Pros and cons: 
 Better sensitivity to peaks close to the beam-center, makes indexing easier.
 Missing peaks at high Q which could jeopardize the quality of the structure.
 
