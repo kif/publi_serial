@@ -9,14 +9,14 @@ import scipy.optimize
 
 img = UtilsTest.getimage("Pilatus6M.cbf")
 geo =  UtilsTest.getimage("Pilatus6M.poni")
-method = ("no", "csr", "cython")
+method = ("no", "csr", "opencl")
 npt = 500
 targets = [87, 160]#, 240]
 ai = pyFAI.load(geo)
 fimg = fabio.open(img)
 msk = fimg.data<=0
 fixed = fimg.data.copy()
-fixed[msk] = 1 
+fixed[msk] = 1
 fig,ax = subplots(2,2, figsize=(12,8))
 fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
@@ -26,8 +26,16 @@ ax[0,0].set_title("a) MX diffraction frame")
 colorbar(mimg, ax=ax[0,0])
 p0 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="poisson", thres=0, max_iter=0,)
 p1 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="poisson", thres=0, max_iter=1,)
+p10 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="poisson", thres=0, max_iter=10,)
 a0 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="azimuthal", thres=0, max_iter=0,)
 a1 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="azimuthal", thres=0, max_iter=1,)
+a10 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="azimuthal", thres=0, max_iter=10,)
+v0 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, variance=numpy.maximum(1, fimg.data), thres=0, max_iter=0,)
+v1 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, variance=numpy.maximum(1, fimg.data), thres=0, max_iter=1,)
+v10 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, variance=numpy.maximum(1, fimg.data), thres=0, max_iter=10,)
+h0 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="hybrid", thres=0, max_iter=0,)
+h1 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="hybrid", thres=0, max_iter=1,)
+h10 = ai.sigma_clip_ng(fimg.data, npt, unit="r_mm", method=method, error_model="hybrid", thres=0, max_iter=10,)
 ax[0,1].plot(a0.radial, a0.intensity, label=r"Average")
 ax[0,1].plot(a1.radial, a1.intensity, label=r"Average after clipping")
 ax[0,1].legend()
@@ -36,9 +44,9 @@ ax[0,1].set_ylabel("Intensity (count)")
 ax[0,1].set_title("b) Azimuthal averaging ")
 
 ax[1,0].plot(a0.radial, numpy.sqrt(a0.sum_variance/a0.sum_normalization), alpha=0.7,label=r"Azimuthal deviation")
-ax[1,0].plot(p0.radial, numpy.sqrt(p0.sum_variance/p0.sum_normalization), alpha=0.7,label=r"Poissonian noise") 
+ax[1,0].plot(p0.radial, numpy.sqrt(p0.sum_variance/p0.sum_normalization), alpha=0.7,label=r"Poissonian noise")
 ax[1,0].plot(a0.radial, numpy.sqrt(a1.sum_variance/a1.sum_normalization), alpha=0.7,label=r"Azimuthal deviation after clipping")
-ax[1,0].plot(p0.radial, numpy.sqrt(p1.sum_variance/p1.sum_normalization), alpha=0.7,label=r"Poissonian noise after clipping") 
+ax[1,0].plot(p0.radial, numpy.sqrt(p1.sum_variance/p1.sum_normalization), alpha=0.7,label=r"Poissonian noise after clipping")
 ax[1,0].set_xlabel(a0.unit.label)
 ax[1,0].set_ylabel("Error (count)")
 ax[1,0].set_ylim(0, 20)
@@ -61,7 +69,7 @@ text_params = {'ha': 'center', 'va': 'center', 'family': 'sans-serif'
                #, 'fontweight': 'bold'
                }
 for target in targets:
-    idx = numpy.argmin(abs(target-p0.radial))    
+    idx = numpy.argmin(abs(target-p0.radial))
     key = list(ai.engines.keys())[0]
     csr = ai.engines[key].engine.lut
     values = fimg.data.ravel()[csr[1][csr[2][idx]:csr[2][idx+1]]]
@@ -71,7 +79,7 @@ for target in targets:
     c = numpy.argmax(v)
     s=1
     h = v.max()
-    x = numpy.arange(values.max())+0.5 
+    x = numpy.arange(values.max())+0.5
     res = scipy.optimize.curve_fit(gaussian, x, v, [h,c,s])[0]
     ax[1,1].plot(x, gaussian(x, *res), label=r"gauss($\mu=$%.2f, $\sigma=$%.2f)"%(res[1], res[2]))
     y_val = numpy.interp(target, a1.radial, a1.intensity)
