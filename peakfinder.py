@@ -91,15 +91,17 @@ res1 = peakfinder_8(**kwargs_pf)
 
 kwargs_py = {"data":fimg.data,
              "dummy": dummy, "delta_dummy":ddummy,
-             "error_model": "azimuthal",
+             "error_model": "hybrid", #azimuthal",
              "cutoff_clip":0,
              "cycle":3,
              "noise":noise,
+             # "cutoff_pick":SNR,
              "cutoff_peak":SNR,
-             "patch_size":2 * nb + 1,
+             "patch_size":2*nb+1,
              "connected":him,
              "polarization": polarization
             }
+
 
 print(f"Len of Cheetah result: {len(res1[0])}")
 gc.disable()
@@ -137,6 +139,8 @@ reh = pf.peakfinder(**kwargs_hy)
 ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI-hybrid")
 ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
 ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
+
+
 ax.legend()
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
@@ -169,7 +173,7 @@ q2 = 20 * pi / d2
 new_labels = [str(int(i)) for  i in d2]
 ax.set_xticks(q2)
 ax.set_xticklabels(new_labels)
-ax.set_xlim(0, rmax + 1)
+ax.set_xlim(0, rmax+1)
 fig.show()
 # fig.canvas.draw()
 #################
