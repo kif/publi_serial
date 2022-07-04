@@ -4,6 +4,7 @@ import os
 import posixpath
 import time
 import numpy
+from math import pi
 from matplotlib.pyplot import subplots, colorbar
 import pyFAI, pyFAI.units
 from pyFAI.test.utilstest import UtilsTest
@@ -18,7 +19,7 @@ from pyFAI.ext.bilinear import Bilinear
 pyfai_color = "limegreen"
 onda_color = "orange"
 
-#Installation of a local copy of the Cython-bound peakfinder8
+# Installation of a local copy of the Cython-bound peakfinder8
 targeturl = "https://github.com/kif/peakfinder8"
 targetdir = posixpath.split(targeturl)[-1]
 if os.path.exists(targetdir):
@@ -32,21 +33,21 @@ except exception as err:
     print(err)
 finally:
     os.chdir(pwd)
-sys.path.append(pwd+"/"+glob.glob(f"{targetdir}/build/lib*")[0])
+sys.path.append(pwd + "/" + glob.glob(f"{targetdir}/build/lib*")[0])
 
 from ssc.peakfinder8_extension import peakfinder_8
 
 img = UtilsTest.getimage("Pilatus6M.cbf")
-geo =  UtilsTest.getimage("Pilatus6M.poni")
+geo = UtilsTest.getimage("Pilatus6M.poni")
 method = ("no", "csr", "cython")
 unit = pyFAI.units.to_unit("q_nm^-1")
 
 dummy = -2
-ddummy=1.5
+ddummy = 1.5
 npt = 500
-repeat = 100
-SNR=3
-noise=1.0
+repeat = 10
+SNR = 3
+noise = 1.0
 nb = 2
 him = 4
 hiM = 999
@@ -56,13 +57,13 @@ polarization_factor = 0.90
 ai = pyFAI.load(geo)
 print(ai)
 fimg = fabio.open(img)
-msk = fimg.data<=0
+msk = fimg.data <= 0
 fixed = fimg.data.copy()
 fixed[msk] = 1
 polarization = ai.polarization(factor=polarization_factor)
 
-fig,ax = subplots( figsize=(12,8))
-#fig.tight_layout(pad=3.0)
+fig, ax = subplots(figsize=(12, 8))
+# fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
 mimg = ax.imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis")
 
@@ -70,9 +71,9 @@ int1d = ai.integrate1d(fimg.data, npt, unit=unit, method=method)
 m = list(ai.engines.keys())[0]
 integrator = ai.engines[m].engine
 r2d = ai._cached_array[unit.name.split("_")[0] + "_center"]
-r2dp = (r2d/ai.detector.pixel1).astype(numpy.float32)
+r2dp = (r2d / ai.detector.pixel1).astype(numpy.float32)
 data = fimg.data.astype(numpy.float32)
-pmsk = (1-msk).astype(numpy.int8)
+pmsk = (1 - msk).astype(numpy.int8)
 kwargs_pf = {"max_num_peaks":max_num_peaks,
              "data":data,
              "mask":pmsk,
@@ -107,7 +108,7 @@ gc.disable()
 t0 = time.perf_counter()
 for i in range(repeat):
     res1 = peakfinder_8(**kwargs_pf)
-t1 =  time.perf_counter()
+t1 = time.perf_counter()
 gc.enable()
 print(f"Execution_time for Cheetah: {1000*(t1-t0)/repeat:.3f}ms")
 
@@ -120,22 +121,22 @@ pf = OCL_PeakFinder(integrator.lut,
                         mask=msk.astype("int8"),
                         profile=True)
 print(pf, pf.ctx.devices[0])
-res = pf.peakfinder8(**kwargs_py)
-print(f"Len of pyFAI result: {len(res)} (azimuthal)")
+res = pf.peakfinder(**kwargs_py)
+print(f"Len of pyFAI result: {len(res)}")
 gc.disable()
 t0 = time.perf_counter()
 for i in range(repeat):
-    res = pf.peakfinder8(**kwargs_py)
-t1 =  time.perf_counter()
+    res = pf.peakfinder(**kwargs_py)
+t1 = time.perf_counter()
 gc.enable()
 print("\n".join(pf.log_profile(1)))
 print(f"Execution_time for pyFAI: {1000*(t1-t0)/repeat:.3f}ms")
 
-#kwargs_py["error_model"] = "hybrid"
-#reh = pf.peakfinder8(**kwargs_py)
-#print(f"Len of pyFAI result: {len(reh)} (hybrid)")
-#ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI_hy")
+kwargs_hy = kwargs_py.copy()
+kwargs_hy["error_model"] = "hybrid"
+reh = pf.peakfinder(**kwargs_hy)
 
+ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI-hybrid")
 ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
 ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
 
@@ -146,43 +147,83 @@ fig.savefig("peakfinder.png")
 fig.show()
 
 print("# Histogram")
-fig,ax = subplots( figsize=(12,8))
+fig, ax = subplots(figsize=(12, 8))
 
 rmax = 44
 interp = Bilinear(r2d)
 r_ch = [interp(i) for i in zip(res1[1], res1[0])]
 r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
-#r_ph = [interp(i) for i in zip(reh["pos0"], reh["pos1"])]
-#ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
-#ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
-hpy = numpy.histogram(r_py, rmax+1, range=(0, rmax))
-#hph = numpy.histogram(r_ph, rmax+1, range=(0, rmax))
-hch = numpy.histogram(r_ch, rmax+1, range=(0, rmax))
-#ax.plot(0.5*(hph[1][1:]+hph[1][:-1]), hph[0], "-", color="red", label="pyFAI_hybrid")
-ax.plot(0.5*(hpy[1][1:]+hpy[1][:-1]), hpy[0], "-", color=pyfai_color, label="pyFAI")
-ax.plot(0.5*(hch[1][1:]+hch[1][:-1]), hch[0], "-", color=onda_color, label="Onda")
-#ax.set_xlabel(int1d.unit.label)
+# ax.hist(r_py, rmax+1, range=(0, rmax), label="pyFAI", alpha=0.8)
+# ax.hist(r_ch, rmax+1, range=(0, rmax), label="Cheetah", alpha=0.8)
+hpy = numpy.histogram(r_py, rmax + 1, range=(0, rmax))
+hch = numpy.histogram(r_ch, rmax + 1, range=(0, rmax))
+ax.plot(0.5 * (hpy[1][1:] + hpy[1][:-1]), hpy[0], "-", color=pyfai_color, label="pyFAI")
+ax.plot(0.5 * (hch[1][1:] + hch[1][:-1]), hch[0], "-", color=onda_color, label="Onda")
+# ax.set_xlabel(int1d.unit.label)
 ax.set_xlabel("Resolution $d$-spacing ($\\AA$)")
 ax.set_ylabel("Number of Bragg peaks")
 ax.set_title("Density of Bragg peaks per ring")
 ax.legend()
 #
 q1 = ax.get_xticks()
-from numpy import pi
-#new_labels = [ f"{d:.4f}" for d in 20*pi/flabel]
-d1 = 20*pi/q1
-d2 = numpy.linspace(len(d1)+int(abs(d1).min()), int(abs(d1).min()), len(d1)+1)
-q2 = 20*pi/d2
+# new_labels = [ f"{d:.4f}" for d in 20*pi/flabel]
+d1 = 20 * pi / q1
+d2 = numpy.linspace(len(d1) + int(abs(d1).min()), int(abs(d1).min()), len(d1) + 1)
+q2 = 20 * pi / d2
 new_labels = [str(int(i)) for  i in d2]
 ax.set_xticks(q2)
 ax.set_xticklabels(new_labels)
 ax.set_xlim(0, rmax+1)
 fig.show()
-#fig.canvas.draw()
+# fig.canvas.draw()
 #################
 fig.savefig("peak_per_ring.eps")
 fig.savefig("peak_per_ring.png")
 
+# Third figure:
+fig, ax = subplots(figsize=(12, 8))
 
+rmax = 44
+interp = Bilinear(r2d)
+ax.plot(0.5 * (hch[1][1:] + hch[1][:-1]), hch[0], "-", color=onda_color, label="Onda")
+
+for model in "poisson", "azimuthal", "hybrid":
+    kwargs_py["error_model"] = model
+    res = pf.peakfinder8(**kwargs_py)
+    print(f"Model: {model} {len(res)} peaks")
+    pf.reset_log()
+    gc.disable()
+    t0 = time.perf_counter()
+    for i in range(repeat):
+        res = pf.peakfinder8(**kwargs_py)
+    t1 = time.perf_counter()
+    gc.enable()
+    print(f"Execution_time for pyFAI, model {model}: {1000*(t1-t0)/repeat:.3f}ms")
+    print("\n".join(pf.log_profile(1)))
+
+    r_py = [interp(i) for i in zip(res["pos0"], res["pos1"])]
+    hpy = numpy.histogram(r_py, rmax + 1, range=(0, rmax))
+    ax.plot(0.5 * (hpy[1][1:] + hpy[1][:-1]), hpy[0], "-", label=f"pyFAI-{model}")
+
+# ax.set_xlabel(int1d.unit.label)
+ax.set_xlabel("Resolution $d$-spacing ($\\AA$)")
+ax.set_ylabel("Number of Bragg peaks")
+ax.set_title("Density of Bragg peaks per ring")
+ax.legend()
+#
+q1 = ax.get_xticks()
+# new_labels = [ f"{d:.4f}" for d in 20*pi/flabel]
+d1 = 20 * pi / q1
+d2 = numpy.linspace(len(d1) + int(abs(d1).min()), int(abs(d1).min()), len(d1) + 1)
+q2 = 20 * pi / d2
+new_labels = [str(int(i)) for  i in d2]
+ax.set_xticks(q2)
+ax.set_xticklabels(new_labels)
+ax.set_xlim(0, rmax + 1)
+fig.show()
+# fig.canvas.draw()
+#################
+# fig.savefig("peak_per_ring.eps")
+fig.savefig("model_comparison.png")
 
 input("finish")
