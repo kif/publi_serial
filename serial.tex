@@ -617,7 +617,7 @@ method & Index. rate & run-time & Index. rate & run-time \\
 \hline
 Zaef \cite{zaefferer} & 100\textperthousand & 2178 s & 100\textperthousand& 430 s\\
 PeakFinder8 \cite{Cheetah2014} & 495\textperthousand& 10397 s &485\textperthousand & 1757 s\\
-PeakFinder9 \cite{CrystFEL} & 442\textperthousand& 8328 s&435\textperthousand&1436 s\\
+PeakFinder9 \cite{FDIP} & 442\textperthousand& 8328 s&435\textperthousand&1436 s\\
 RobustPF \cite{robustpeakfinder} & 224\textperthousand& 6314 s& 212\textperthousand& 1628 s \\
 pyFAI (this contribution) & 497\textperthousand& 9325 s& 492\textperthousand &1595 s\\
 \hline
@@ -640,33 +640,49 @@ The peak extraction in pyFAI is about as fast as the sparsification, so it can b
 Nevertheless the executable `peakfinder` available from pyFAI (offline tool) has a total execution time which is much larger: about 30 s for 1000 frames, most of which is spent in reading and writing the different HDF5 files.
 
 \subsection{Peak count as $veto$ algorithm}
-Since the background extraction and peak finding is performed in real-time on the serial-crystallography beamline ID29 at ESRF, the information about the number of Bragg-spots can be used to assess the quality of each individual image and the acquisition system can decide to discard the frame depending on the number of peaks and a live-adjustable threshold. 
+Since the background extraction and peak finding are performed in real-time on the serial-crystallography beamline ID29 at ESRF, the information about the number of Bragg-spots can be used to assess the quality of each individual image and the acquisition system can decide to discard the frame depending on the number of peaks and a live-adjustable threshold. 
 
-For a couple of years, the beamline operated with the $veto$ algorithm deactivated, the result of the processing was just used to create a flag "hit" or "no-hit" depending if the number of peaks. 
-The indexation rate of "hit" and "no-hit" frames acquires on XXXX microcrystals are summarized in the table \ref{veto-table}:
+For a couple of years, the beamline operated with the $veto$ algorithm deactivated, the number of peaks found was just recorded for future exploration. 
+The figure \ref{veto-fig} presents the indexation rate of "hit" (in blue) and "non-hit" frames (in orange) when changing the threshold for the minimum peaks-count per frame. 
+The expected compression rate is displayed in green.
+The dataset consists of 80000 lysozyme micro-crystals between two mylar films, raster scanned with a x-ray beam of 11.56 keV at ESRF-ID29.
+The offline analysis has been performed with CrystFEL (v0.11.0) using `peakfinder8` and `xgandalf` as indexer. 
 
-\begin{table}
-\label{veto-table}
-\caption{Indexation rate for frames \cite{lysozyme}.}.
-\begin{tabular}{|c|c|c|c|} 
-\hline
- & hit & no-hot & total \\ 
-Number of frames & - & - & - \\
-Indexed & - & - & - \\
-Indexation rate & - & - & - \\
-\hline
-\end{tabular}
-\end{table}
+\begin{figure}
+\label{veto-fig}
+\begin{center}
+\includegraphics[width=9cm]{fig7/veto-fig}
+\caption{Indexation rate of frames which would be considered as "hit" or "non-hit" as function of the peak-count threshold. 
+The green curve presents the disk space which could have been saved.
+The sample dataset consists of 80000 frames of lysozyme micro-crystals indexed off-line with Xgandalf in CrystFEL.}
+\end{center}
+\end{figure}
 
-Since the Jungfrau is an integrating detector, the detector has relatively more background noise than a photon counting detector.
-Thus the compression rate of hit and non-hit frames is similar and discarding ???\% non-hit frames of would have allowed to save as much network bandwidth and disk space.
-The $veto$ algorithm having proved its robustness, it is activated for most experiments since 2024.
+%summarized in the table \ref{veto-table}:
+
+% \begin{table}
+% \label{veto-table}
+% \caption{Indexation rate for frames \cite{lysozyme}.}.
+% \begin{tabular}{|c|c|c|c|} 
+% \hline
+%  & hit & no-hot & total \\ 
+% Number of frames & - & - & 80000 \\
+% Indexed & - & - & - \\
+% Indexation rate & - & - & - \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+Since the Jungfrau is an integrating detector, the detector has relatively more background noise than a photon counting detector: here, data were saved with 8 ADU/photon, making the compression rate of hit and non-hit frames similar.
+In this example, discarding frames with less than 20 peaks of would have allowed to save one third of the network bandwidth and disk space, loosing only 0.16\% of frames index-able. 
+The indexation rate of actually recorded frames also increased to 20\%.
+The $veto$ algorithm having proved its robustness, it is now activated for (most) experiments on combination with a graphical helper tools to asses the optimal threshold during the experiment.
 
 
 \subsection{Limitations}
-The Jungfrau 4M detector is built from 8 modules manually assembled which have some remaining misalignment. 
-The geometry of this detector used for the azimuthal integration is based on pyFAI and differs from the geometry used by the indexing software. 
-We noticed a very strong sensitivity of the indexation rate on the peak-position (<1 pixel) with data acquired with the Jungfrau detector on ID29 (unlike the experiment on Eiger described in \ref{quality-pf}), which could be linked to the detector geometric distortion and/or the pink beam. 
+The Jungfrau 4M detector is built from 8 modules manually assembled which have some residual  misalignment, on the order of a couple of pixels, but it is enough to prevent indexation. 
+The geometry of this detector used for the azimuthal integration is based on pyFAI where every pixel is independent and differs from the geometry used by the indexing software where pixels are assembled in rigid modules. 
+The strong sensitivity of the indexation rate on the peak-position (<1 pixel) noticed with data acquired with the Jungfrau detector on ID29 (unlike the experiment on Eiger described in \ref{quality-pf}), which could be linked to the detector geometric distortion and/or the pink beam. 
 For now, frames are for still indexed on peaks freshly extracted by CrystFEL and work is ongoing about the conversion of geometries and their optimisation.
 
 \section{Conclusion}
@@ -688,7 +704,7 @@ The quality of the picking has been evaluated by comparing the indexation rate w
 \ack{Acknowledgements}
 The authors would like to thank Gavin Vaughan, scientist at Materials beamline at the ESRF,  for the constructive discussion about sigma-clipping versus median filtering. 
 We would like to thank also Jonathan P. Wright and Carlotta Giacobbe for offering us the ability to test those algorithms on small molecule data and validate the concept on the ID11 beamline at the ESRF.
-
+Pierre Paleo and Jerome Lesaint are also acknowledged for the fruitful discussions on numerical methods.
 
 \bibliographystyle{iucr}
 \bibliography{biblio}
