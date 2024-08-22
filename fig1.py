@@ -3,7 +3,7 @@ from matplotlib.pyplot import subplots, colorbar
 import pyFAI
 from pyFAI.test.utilstest import UtilsTest
 import fabio
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, Normalize
 import scipy.optimize
 
 
@@ -19,7 +19,8 @@ fixed = fimg.data.copy()
 fixed[msk] = 1
 fig,ax = subplots(2,2, figsize=(12,8))
 fig.tight_layout(pad=3.0)
-ln = LogNorm(1, fimg.data.max())
+ln = LogNorm(1, 1000)#, fimg.data.max())
+#ln = Normalize(0, 1000)#, fimg.data.max())
 mimg = ax[0,0].imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis")
 ax[0,0].set_title("a) MX diffraction frame")
 
@@ -48,6 +49,10 @@ ax[1,1].legend()
 ax[1,0].set_ylabel("Number of pixels")
 ax[1,0].set_xlabel("Intensity of pixels")
 ax[1,0].set_title(f"d) Histogram of pixel intensities in {len(targets)} rings")
+
+# rings
+r = ai.array_from_unit(unit="r_mm")
+rings=ax[0,0].contour(r, levels=[87, 160], colors=['blue', 'green'])
 
 def gaussian(x, h, c, s):
     return h*numpy.exp(-(x-c)**2/(2*s*s))
