@@ -110,7 +110,7 @@ X-ray macromolecular crystallography is one of the most successful methods to de
 The achievable diffraction quality may often be limited by radiation damage. 
 Although cryogenic conditions permit to extend the lifetime of crystals in the X-ray beam and to increase the maximum absorbed dose before inducing damage they may hinder physiologically relevant conformations. 
 This limitation has renovated the interest for room temperature macromolecular crystallography by applying a more drastic approach to overcome the radiation damage problem by collecting data from thousands of small crystals, in what became known as serial crystallography. 
-First developed at X-ray free electron laser sources (\textsc{xfel}) \cite{Chapman2011, structure_sx} the method is currently applied also at synchrotron sources \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}
+First developed at X-ray free electron laser sources (\textsc{xfel}) \cite{Chapman2011, structure_sx} the method is currently applied also at synchrotron sources \cite{ssx, ssx_desy, ssx_id13, ssx_diamond}.
 
 
 % The diffraction quality achievable from a macromolecular crystallography experiment is limited by radiation damage.
@@ -129,31 +129,32 @@ First developed at X-ray free electron laser sources (\textsc{xfel}) \cite{Chapm
 %It is composed of several techniques where multiple crystals (hundreds or thousands) are exposed in a serial %way to the X-ray beam to collect a complete dataset. 
 %
 %The serial approach is particularly useful to try to overcome the limitations of radiation damage in %rotational crystallography, particularly in very small crystals.
-Serial crystallography consists in exposing thousands of small crystals to the synchrotron beam only once in a serial way.
+Serial crystallography consists in exposing thousands of small crystals to the X-ray beam only once in a serial way.
 Diffraction is collected with a very high flux density, in order to extract the most information from a single shot.
 This is in contrast with traditional rotational crystallography, where a complete dataset is collected from a single crystal rotated around one (or several) axis. 
-Those SSX images contain only a fraction of the reciprocal space, as the crystal does not rotate inside the beam.
+Those SSX images represent a slice through the reciprocal space, thus intersect a lower fraction of the reciprocal space as the crystal is still, in comparison with rotational crystallography.
 To achieve a complete dataset, thousands of frames have to be collected, individually indexed and then merged.
-The high flux needed to collect all diffraction signal from a single crystal within a single exposure makes  the SSX technique a good candidate to benefit from the 4\textsuperscript{th} generation synchrotron sources, such as the new ESRF-EBS update \cite{EBS}.
+The high flux needed to collect all diffraction signal from a single crystal within a single exposure makes the SSX technique a good candidate to benefit from the 4\textsuperscript{th} generation synchrotron sources, such as the new ESRF-EBS update \cite{EBS}.
 However, macromolecular crystallography beam-lines (MX) have been extremely specialized towards rotational data-collection and thus require modifications to the experimental setup to perfom SSX experiments.
-The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (using a larger energy bandwidth with a multilayer monochromator), a high-speed chopper (to produce X-ray pulses), several sample delivery methods and a fast detector.
+The synchrotron serial crystallography beamline (ID29 at the ESRF) has been built to have a dedicated environment to perform SSX experiments with a high flux (using a larger energy bandwidth with a multilayer monochromator), a high-speed chopper (to separate X-ray pulses), several sample delivery methods and a fast detector.
 
 \subsection{\textsc{Jungfrau} 4M detector}
 Macro-molecular crystallography has enormously progressed in the last decades with to the introduction of photon-counting detectors \cite{pilatus}. 
 With their absence of read-out noise and their fast speed, the main limitation of photon-counting detectors is the achievable count-rate, i.e. how fast the electronic of a pixel is able to count arriving photons.
 % difference bewteen pixel counting vs integrating, in speed ...
 Unlike photon-counting detectors such as the Eiger detector \cite{Eiger}, the \textsc{Jungfrau} detector \cite{jungfrau2016} is an integrating detector, thus, it is not limited by the count rate, even under the very intense flux expected when recording Bragg-peaks.
-To cope with this photons density, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision of the order of one third of a keV on the higher gain mode, a precision of the order of one photon in the intermediate level and the ability to cope with thousands of photons in the lower gain mode, every millisecond.
+To cope with this photons density, every single pixel implements an automatic gain switching mechanism (3 levels) which offers a precision of the order of one third of a keV on the higher gain mode, a precision of the order of one photon in the intermediate level and the ability to cope with thousands of photons in the lower gain mode.
+Moreover, the \textsc{Jungfrau} is able to operate at two kilohertz, which means the image must be read every half millisecond.
 Since the \textsc{Jungfrau} detector is an integrating detector, dark current and flat-field correction have to be applied: every pixel has three, so called, pedestals and three gain values (one for each gain level). 
-This large number of parameters per pixel combined with the gain-compression makes the pre-processing of raw signal challenging: the signal from a single pixel, initially stored on 16 bits of data, needs to be represented using 32 bits (as floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
+This large number of parameters per pixel makes the pre-processing of raw signal challenging at full speed: the signal from a single pixel, initially packed with 16 bits per pixel, gets expanded to 32 bits (floating point or integer value), doubling the required bandwidth and the storage size \cite{jungfrau_PSI}.
 The ID29 beamline features a \textsc{Jungfrau} 4M detector, operating at 1kHz, pace imposed by the chopper and synchronized with the photon bunches from the ESRF.
-At nominal speed, the detector will produce 20 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
+At nominal speed, the detector will produce 16 GBytes of pre-processed data per second, making the data analysis and storage extremely challenging.
 
 \subsection{Requirements for online data processing}
 
 Serial crystallography is one of the techniques where online data processing is likely to have most impact:
-millions of images are to be collected but too fast to be saved. 
-We expect only a few percentage of the frames to contain diffraction signal and out of them, a fraction to be indexed, integrated and used to solve the protein structure.
+millions of images are to be collected, and existing detector already saturate the fastest storage systems, not even considering the cost this storage.
+Beside this, only a few percentage of the frames are expected to contain diffraction signal and out of them, a fraction will be indexed, integrated and thus useful to solve the protein structure.
 Efficient processing of raw images is thus essential for SSX, with 4 levels of increasing complexity:
 \begin{itemize}
     \item image reconstruction with pedestal correction
@@ -177,10 +178,13 @@ This document will focus on the subsequent steps: the detection of signal is add
 \section{Algorithm for the separation of the amorphous background from the Bragg peaks}
 \subsection{Background scattering}
 %be careful & be precise ...
-The simplest implementation of Bragg peaks separation is to assume that the background signal originates from scattering of amorphous material (or from an isotropic powder), giving an isotropic signal that ideally presents only smooth variations.
+The simplest implementation of Bragg peaks separation is to assume that the background signal originates from scattering of amorphous material 
+%(or from an isotropic powder), 
+giving an isotropic signal that ideally presents only smooth variations.
 Before background subtraction, the raw signal has to be corrected for dark noise and for any systematic anisotropic effects such as polarization corrections.
 Unlike X-FEL, synchrotron X-ray beam is better characterized in energy and shows little to none pulse to pulse variability.
 All anisotropic correction can be easily modelled and taken into account.
+The same method can be extended to separate Bragg peaks from powder diffraction if the powder signal is isotopic, i.e. without preferred orientation. 
 
 %the first thing is to get it working, the second is to make it fast ... coming from another field of science.
 The initial implementation of signal separation in pyFAI \cite{pdj2013} was relying on a 2D polar transform followed by a median filter in the azimuthal dimension to calculate the amorphous scattering curve.
@@ -349,13 +353,15 @@ While the two curves show similar amplitude, except in the corner of the detecto
 
 \subsection{Histogram intensity }
 
-The figure \ref{fig1}a presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector and several curves obtained from azimuthal integration of those data: 
+The figure \ref{fig1} presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector (Fig \ref{fig1}a) and several curves obtained from azimuthal integration of those data: 
 figure \ref{fig1}b is the azimuthally integrated signal (blue curve) where Bragg peaks are seen as spikes on top of a smooth background.
-Plot \ref{fig1}c presents the uncertainties measured according to the Poisson distribution (orange curve)%, valid since Pilatus are photon counting detectors) 
+figure \ref{fig1}c presents the uncertainties measured according to the Poisson distribution (orange curve) %, valid since Pilatus are photon counting detectors) 
 or the deviation in the ring (blue curve). 
 The later presents much larger values since Bragg peaks contribute a lot to the deviation despite they represent few pixels: this highlights the sensitivity of the mean/std to outliers.
-In the plot \ref{fig1}d are presented histogram of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
-Each of those histograms is composed of a bell-shaped distribution, centered on the average value with negative outliers tagged with the pixel value -1 (this is specific to the Pilatus detector), and few positive outliers which are usually Bragg peaks.   
+In the figure \ref{fig1}d are presented histograms of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
+Each of those histograms is composed of a bell-shaped distribution with 
+%negative outliers tagged with the pixel value -1 (this is specific to the Pilatus detector), and 
+few positive outliers which are usually Bragg peaks.   
 Those histograms in figure \ref{fig1}d have been fitted with a Gaussian curve and both the center ($\mu$) and the width ($\sigma$) of the curve match 
 roughly with the average (in \ref{fig1}b) and uncertainties (in \ref{fig1}c).  
 \begin{figure}
@@ -605,13 +611,20 @@ The similarity of those figures allows a direct comparison of peaks found per re
 \begin{figure}
 \label{peak_per_ring}
 \includegraphics[width=12cm]{peak_per_ring}
-\caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. The width of each radial-shell is two inverse nanometer in $q-$space.}
+\caption{Number of peaks found in the different resolution shell for the \textit{peakfinder} implemented in pyFAI and in Onda. 
+The width of each radial-shell is two inverse nanometer in $q-$space. 
+The dashed lines represents the number of those peaks which have successfully been indexed, i.e. located at less than two pixels away from an expected reflection (calculated by Xgandalf). }
 \end{figure}
 
-The analysis of the histogram in figure \ref{peak_per_ring} confirms that the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
+The figure \ref{peak_per_ring} presents the histogram of modulus of the scattering vector of the peaks found with different methods, i.e. the number of peaks having a given q-value.
+For readability, those histograms (bin width: $2 nm^{-1}$) have been represented as plots with the horizontal axis labeled in d-spacing ($q=2\pi/d$).  
+The analysis of those histograms confirms that the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
 This is likely due to the curvature of the Debye-Scherrer ring: the original version of peakfinder8 evaluates the variance in a neighborhood defined by some radius around the point of interest and the variance is higher close to the beam-center due to the important curvature of those rings.
 On the opposite, pyFAI knows about this curvature and measures the variance along the ring.
 Points picked by Onda at larger q-values do not look like Bragg-peaks but this could be a side-effect of the parameter tuning to get the same number of peaks for both algorithms.
+
+The same figure presents with dashed lines the number of peaks which are coincident (within 2 pixels) with expected reflections (after indexing using Xgandalf).
+It demonstrates that the additional peaks found by pyFAI in the inner-shell ($d>3\AA$) are consistent with Bragg-peaks, thus valuable for indexing, while the additional peaks found by Onda in the outer shell ($d<2\AA$) are not Bragg-peaks, and thus are detrimental.
 
 A word on performances: the Python binding in Onda to the peakfinder8 algorithm from Cheetah runs in 180ms on a high-end server CPU (AMD Epyc 7262) and 300ms on a workstation (Intel Xeon E5-1650 v4). 
 The version available in pyFAI was designed in OpenCL \cite{opencl_khronos, opencl, pyopencl} and runs best on GPUs: 30ms on a AMD Vega 56 and in 10 ms on a Nvidia RTX A5000. 
