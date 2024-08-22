@@ -442,21 +442,25 @@ Thus, the average intensity per azimuthal bin together with the associated uncer
 The sigma-clipping algorithm was originally written for real-time sparsification of single crystal diffraction data and its integration into the LIMA2 detector control system \cite{lima} for the \textsc{Jungfrau} 4M detector used at ESRF ID29 is described in \cite{sri2021}.
 The real-time constrain imposed to develop code running on GPU since those devices are several times
 faster than equivalently priced processors.
-All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package.
-A command line tool called `sparsify-Bragg' is available for testing off-line.
+All algorithms were developed in OpenCL \cite{opencl_khronos} and implemented in the \textit{pyFAI} software package (MIT-licence, available on github).
+A command line tool called `sparsify-Bragg' is available for testing off-line since version 2023.01.
 
 All the pixel coordinates and intensities are stored in a HDF5 container \cite{hdf5} following the NeXus  convention \cite{nexus}, together with a snippet of Python code explaining how to rebuild the dataset.
 All sparse datasets (averaged and uncertainties curves, pixel coordinates, etc..) are compressed with the bitshuffle-LZ4 \cite{bitshuffle} lossless compression.
 
 \subsection{Densification}
-Since no crystallographic software package can deal with this sparse format, the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (version $\ge$0.12). 
+Since no crystallographic software package can deal with this sparse format (yet), the densification code was developed to regenerate initial frames and the `densify-Bragg` program was made available as part of the FabIO \cite{fabio} software package (MIT license). 
+The source code is available on github and `densify-Bragg` is available since version 2022.12, available via usual channels like pip or conda install. 
 The software constrains for this densification code are very different from the one for sparisfication since this code can be used by the final users.
 For this reason `densify-Bragg' was optimized to run on multi-core CPU.
 %option is probably not the right term here. 
 Maybe an important consideration is whether, regardless from the file format, it is necessary to reconstruct the background or not. 
 % Beside classical options like file-format and file-name, there is one important consideration whether the background noise has to be reconstructed or not. 
-In fact, some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result with noise-less background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background propely restored.
+In fact, some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result with noise-less background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background properly restored.
 Shaded regions are never reconstructed properly and should be masked adequately in the reduction software.
+
+Future development will focus on a HDF5-plugins able to provide access to densified images from their sparse representation. 
+This will allow any analysis software able to read HDF5 files to treat sparse data as if they were dense, removing the burden of densifying the images from the users.
 
 \subsection{Performances}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
