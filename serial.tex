@@ -385,6 +385,9 @@ This clipping re-centers the distribution of remaining pixels since the mean is 
 The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c are the uncertainties calculated after this clipping. 
 After clipping, the average and uncertainties curves have lost most of their spikes, which means that most Bragg peaks and shadowed pixel have been discarded.
 
+Of course this works only if the background signal is isotropic, ideally smoothly varying, and there are many more background pixels than peaks or shadowed pixels. 
+While shadows can be handled with a user defined mask, anisotropy in the background scattering, as it is sometimes observed with certain stretched plastic films in fixed-target mode, is much more challenging and will not be addressable wit this analysis.   
+
 \subsection{Sigma-clipping}
 The \textit{sigma-clipping} algorithm consists in applying this outlier rejection several times.
 If the initial distribution is mono-modal, this algorithm enforces gradually the data to be sampled symmetrically around the maximum probability, which is likely to look like a normal distribution.
