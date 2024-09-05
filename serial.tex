@@ -583,20 +583,21 @@ The main difference between the two approaches is that here, no peak identificat
 So more pixels values get saved, trading disk space for quality of the recorded dataset.
 
 \subsection{Performances on a single crystal protein dataset}
-
+Example NQO1
 \subsection{Influence of the cut-off on the quality of serial-crystallography data}
-
+Example from Nicolas.
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
 This excludes notably diffuse scattering experiment but it is generally applicable to most single crystal diffraction experiments, ranging from small molecules to macro-molecules like proteins and even serial crystallography.
 With the addition compression offered, sparsification is especially interesting for serial crystallography with datasets of millions of frames collected per experiment.
-As any lossy compression, the user has still the responsibility of choosing the level under which all data will be lost, which will limit later-on the quality of the results one may extract from those data.  \cite{cc1/2}.
+As any lossy compression, the user has still the responsibility of choosing the level under which all data will be lost, which will limit later-on the quality of the results one may extract from those data. 
+This is of crucial importance for macromolecular crystallography where valuable information is still present in reflection with SNR less than one \cite{cc1/2}.
 
 In comparison with ROIBIN-SZ \cite{roibin}, which preserves pixels in the neighborhood of identified peaks and stores the background heavily binned, the sparsification presented here does not require a complete peak-search thus it is simpler, with fewer parameters to be tuned, and is able to save any pixel which is intense enough.
 Nevertheless, peak-finding is of crucial important for identifying Bragg-peaks, one of the first stage of any data reduction pipeline.
 
-\section{Application to peak-finding}
+\section{Application to peak-finding for serial crystallography}
 A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, only keeping the frames which deserve processing. 
 This is the role of the "veto-algorithms".
 
