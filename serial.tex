@@ -584,23 +584,45 @@ So more pixels values get saved, trading disk space for quality of the recorded 
 
 \subsection{Influence of the sparsification on the quality of serial-crystallography data acquired with Eiger detector}
 \label{nicolas} %Example from Nicolas.
-The influence of the sparsification and especially of the cut-off parameter has been evaluated along two axis, first of all, monitoring the degradation of quality indicators degradation and then, by checking the ability to phase a dataset from anomalous signal.
+The influence of the sparsification and especially of the cut-off parameter has been evaluated along two axis, first of all, the monitoring the degradation of quality indicators and then, by checking the ability to phase a dataset from anomalous signal.
 
 Tiny crystals of egg white lysozyme (HEWL) + Gadolinium were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30A3 beamline at the ESRF (Massif3) with an Eiger 4M detector.
 This dataset consists of 11637 frames out of which 11512 were indexed.
 
+\subsubsection{Quality indicator degradation:}
+The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset and compared with the same dataset sparsified at 0.8, 1.0, 1.4 and $2.0\sigma$ in the figure \ref{}
+
+\begin{figure}
+\label{Rfree}
+\begin{center}
+\includegraphics[width=9cm]{figure_rfree}
+\caption{Rfree/Rwork crystallographic quality indicators at different resolution shells obtained from the complete dataset (11k frames) of HEWL+Ga. The quality of the sparsified data (at $0.8\sigma$ and $2.0\sigma$) are compared with the initial dataset.}
+\end{center}
+\end{figure}
+
+
 \subsubsection{Quality indicator degradation as function of the resolution shell:}
 The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset for different resolution shells. 
-Those indicatores are compared with the one obtained from the same dataset sparsified at $0.8\sigma$ and $2.0\sigma$ and subsequently re-densified in figure \ref{nicolas_R}.
-
+Those indicatores are compared in the figure \ref{nicolas_R} with the one obtained from the same dataset sparsified at $0.8\sigma$ and $2.0\sigma$ and subsequently re-densified.
 
 \begin{figure}
 \label{nicolas_R}
 \begin{center}
-\includegraphics[width=9cm]{nicolas5.1}
+\includegraphics[width=9cm]{nicolas5.2}
 \caption{Rfree/Rwork crystallographic quality indicators at different resolution shells obtained from the complete dataset (11k frames) of HEWL+Ga. The quality of the sparsified data (at $0.8\sigma$ and $2.0\sigma$) are compared with the initial dataset.}
 \end{center}
 \end{figure}
+
+Both Rfree and Rwork exhibit degradation of the 
+
+\begin{figure}
+\label{nicolas_A}
+\begin{center}
+\includegraphics[width=9cm]{nicolas5.1}
+\caption{Influence of the sparsification (at $0.8\sigma$ and $2.0\sigma$ vs initial dataset) on the ability to phase a the HEWL+Ga protein with an artificially reduced number of frames, in order to limit the strength of the anomalous signal.}
+\end{center}
+\end{figure}
+
 [...]
 I looked at the possibility or not to phase, and the difference in R/Rfree between original and sparsified (then reconstructed) data.
 
@@ -611,8 +633,6 @@ Please see the attached document, which briefly present a part of the analysis I
 
 If we really want to perform the analysis with anomalous signal from ID29 data, we could use the HEWL+TbXo4 from https://www.biorxiv.org/content/10.1101/2024.05.13.593864v1.full ?
 I should still have some scripts to run the analysis (would need some digging). 
-
-
 
 
 \subsection{Performances on a serial crystallography dataset}
