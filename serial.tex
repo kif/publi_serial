@@ -353,21 +353,21 @@ While the two curves show similar amplitude, except in the corner of the detecto
 
 \subsection{Histogram intensity }
 
-The figure \ref{fig1} presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector (Fig \ref{fig1}a) and several curves obtained from azimuthal integration of those data: 
-figure \ref{fig1}b is the azimuthally integrated signal (blue curve) where Bragg peaks are seen as spikes on top of a smooth background.
-figure \ref{fig1}c presents the uncertainties measured according to the Poisson distribution (orange curve) %, valid since Pilatus are photon counting detectors) 
+The figure \ref{fig2} presents the diffraction from a single crystal of insulin collected with a Pilatus 6M detector (Fig \ref{fig2}a) and several curves obtained from azimuthal integration of those data: 
+figure \ref{fig2}b is the azimuthally integrated signal (blue curve) where Bragg peaks are seen as spikes on top of a smooth background.
+figure \ref{fig2}c presents the uncertainties measured according to the Poisson distribution (orange curve) %, valid since Pilatus are photon counting detectors) 
 or the deviation in the ring (blue curve). 
 The later presents much larger values since Bragg peaks contribute a lot to the deviation despite they represent few pixels: this highlights the sensitivity of the mean/std to outliers.
-In the figure \ref{fig1}d are presented histograms of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
+In the figure \ref{fig2}d are presented histograms of pixel intensity for pixels laying at 87mm and 160mm from the beam center. 
 Each of those histograms is composed of a bell-shaped distribution with 
 %negative outliers tagged with the pixel value -1 (this is specific to the Pilatus detector), and 
 few positive outliers which are usually Bragg peaks.   
-Those histograms in figure \ref{fig1}d have been fitted with a Gaussian curve and both the center ($\mu$) and the width ($\sigma$) of the curve match 
-roughly with the average (in \ref{fig1}b) and uncertainties (in \ref{fig1}c).  
+Those histograms in figure \ref{fig2}d have been fitted with a Gaussian curve and both the center ($\mu$) and the width ($\sigma$) of the curve match 
+roughly with the average (in \ref{fig2}b) and uncertainties (in \ref{fig2}c).  
 \begin{figure}
-\label{fig1}
+\label{fig2}
 \begin{center}
-\includegraphics[width=14cm]{fig1}
+\includegraphics[width=14cm]{fig2}
 \caption{Single crystal diffraction frame obtained from insulin with a Pilatus 6M (a) with the azimuthally averaged signal (b), 
 before and after clipping data. Uncertainties are presented in (c) when calculated assuming a Poissonian error model (orange, red) or when measuring the deviation within all pixels in a ring (green, blue).
 Subplot (d) presents the histogram of intensities for two rings at r=87mm and r=160mm from beam center with the distribution fitted as Gaussian curves: $g(x)\propto exp(-\frac{(x-\mu)^2}{2\sigma^2})$.}
@@ -382,7 +382,7 @@ This clipping re-centers the distribution of remaining pixels since the mean is 
 \label{clip}
 |I - <I>| > n \cdot \sigma(I)
 \end{equation}
-The orange plot in figure \ref{fig1}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig1}c are the uncertainties calculated after this clipping. 
+The orange plot in figure \ref{fig2}b presents the average after having discarded those outliers, and the orange and green curve of figure \ref{fig2}c are the uncertainties calculated after this clipping. 
 After clipping, the average and uncertainties curves have lost most of their spikes, which means that most Bragg peaks and shadowed pixel have been discarded.
 
 Of course this works only if the background signal is isotropic, ideally smoothly varying, and there are many more background pixels than peaks or shadowed pixels. 
@@ -625,7 +625,7 @@ It is inspired from  NanoPeakCell \cite{nanopeakcell} for online visualization a
 We will first compare the peak-picking algorithm with some reference implementation on a single frame before evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator.
 
 \subsection{Comparison of picked peaks}
-Figure \ref{peakfinder} presents the comparison between the original \textit{peakfinder8} described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI on the same Pilatus 6M image, already used in figure \ref{fig1}. 
+Figure \ref{peakfinder} presents the comparison between the original \textit{peakfinder8} described in \citeasnoun{Cheetah2014}, interfaced in Python via OnDA \cite{onda} and the version implemented into pyFAI on the same Pilatus 6M image, already used in figure \ref{fig2}. 
 
 \begin{figure}
 \label{peakfinder}
