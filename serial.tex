@@ -582,6 +582,39 @@ Those results are very different from the one described in \citeasnoun{veto_2024
 The main difference between the two approaches is that here, no peak identification is performed, thus no minimum number of contiguous and intense pixels are to be found. 
 So more pixels values get saved, trading disk space for quality of the recorded dataset.
 
+\subsection{Influence of the sparsification on the quality of serial-crystallography data acquired with Eiger detector}
+\label{nicolas} %Example from Nicolas.
+The influence of the sparsification and especially of the cut-off parameter has been evaluated along two axis, first of all, monitoring the degradation of quality indicators degradation and then, by checking the ability to phase a dataset from anomalous signal.
+
+Tiny crystals of egg white lysozyme (HEWL) + Gadolinium were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30A3 beamline at the ESRF (Massif3) with an Eiger 4M detector.
+This dataset consists of 11637 frames out of which 11512 were indexed.
+
+\subsubsection{Quality indicator degradation as function of the resolution shell:}
+The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset for different resolution shells. 
+Those indicatores are compared with the one obtained from the same dataset sparsified at $0.8\sigma$ and $2.0\sigma$ and subsequently re-densified in figure \ref{nicolas_R}.
+
+
+\begin{figure}
+\label{nicolas_R}
+\begin{center}
+\includegraphics[width=9cm]{nicolas5.1}
+\caption{Rfree/Rwork crystallographic quality indicators at different resolution shells obtained from the complete dataset (11k frames) of HEWL+Ga. The quality of the sparsified data (at $0.8\sigma$ and $2.0\sigma$) are compared with the initial dataset.}
+\end{center}
+\end{figure}
+[...]
+I looked at the possibility or not to phase, and the difference in R/Rfree between original and sparsified (then reconstructed) data.
+
+Regarding the comment on weakly diffracting crystals of the reviewers, one way to "artificially" decrease the anomalous signal strength is to lower the number of indexed patterns in a dataset.
+The original dataset contains ~11k indexed patterns. We could phase with as low as 3.5k indexed patterns (both original and sparsified).
+This seems to be a strong benefit of the algorithm compared to the ROBIN-SZ compression algorithm mentioned by both reviewers.  
+Please see the attached document, which briefly present a part of the analysis I did. 
+
+If we really want to perform the analysis with anomalous signal from ID29 data, we could use the HEWL+TbXo4 from https://www.biorxiv.org/content/10.1101/2024.05.13.593864v1.full ?
+I should still have some scripts to run the analysis (would need some digging). 
+
+
+
+
 \subsection{Performances on a serial crystallography dataset}
 Small crystals of NQO1 sample \cite{NQO1}, complexed with NADH, were collected at ESRF-ID29 using a fixed-target sample environment. 
 The complete dataset represents 574k frames (5 TB) out of which 25809 frames were selected with nice peaks (4.5\% of the total).
@@ -610,24 +643,6 @@ There is little on can say, except the number of indexed frames drops slightly.
 TODO: place here the analysis of the electron density
 
 
-\subsection{Influence of the cut-off on the quality of serial-crystallography data}
-\label{nicolas}
-The influence of the cut-off parameter has been evaluated on the ability to phase a dataset and reconstruct an electron density map. 
-This ability was probed with different number of frames in the dataset in order to artificially decrease the anomalous signal strength.
-
-Tiny crystals of egg white lysozyme (HEWL) + Gadolinium were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30A3 beamline at the ESRF (Massif3) with an Eiger 4M detector.
-This dataset consists of 11637 frames out of which 11512 were indexed.
-I looked at the possibility or not to phase, and the difference in R/Rfree between original and sparsified (then reconstructed) data.
-
-Regarding the comment on weakly diffracting crystals of the reviewers, one way to "artificially" decrease the anomalous signal strength is to lower the number of indexed patterns in a dataset.
-The original dataset contains ~11k indexed patterns. We could phase with as low as 3.5k indexed patterns (both original and sparsified).
-This seems to be a strong benefit of the algorithm compared to the ROBIN-SZ compression algorithm mentioned by both reviewers.  
-Please see the attached document, which briefly present a part of the analysis I did. 
-
-If we really want to perform the analysis with anomalous signal from ID29 data, we could use the HEWL+TbXo4 from https://www.biorxiv.org/content/10.1101/2024.05.13.593864v1.full ?
-I should still have some scripts to run the analysis (would need some digging). 
-
-Example from Nicolas.
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
