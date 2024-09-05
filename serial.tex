@@ -428,23 +428,31 @@ So, for a Poissonian detector and a low count rate of one ($\lambda = \mu = \sig
 % could be interesting to show Threshold vs cycle for the example above (if relevant)
 %it is relevant, but the paper is quite dense already
 
-\section{Application to single crystal diffraction image compression}
-Diffraction images from a single protein crystal exhibit usually an isotropic background on top of which Bragg peaks appear.
+\section{Application to lossy image compression for X-ray diffraction}
+Diffraction images from protein crystals usually exhibit an isotropic background on top of which Bragg peaks appear (discarding any diffuse scattering). 
 The sigma-clipping algorithm can be used to select the background level and more importantly the associated uncertainty.
+This lossy compression algorithm consists in saving only pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
 
-This lossy compression algorithm consists in picking (and storing) pixels which intensity is above the average background value ($\mu$) plus $n$ standard deviation ($\sigma$). 
-This cut-off value $n$ (also called $SNR_{pick}$) controls the amount of data to store and provides also a hint for the compression ratio achievable, assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded with $n=1$;  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
+The decompression simply restores those intense pixels and builds a smooth background for the missing ones (possibly with noise).
+The cut-off value $n$ (also called $SNR_{pick}$) controls the amount of data to store. 
+It is linked to the compression ratio: assuming a normal distribution has been enforced at the sigma-clipping stage: 16\% of the pixel are to be recorded with $n=1$;  2.3\% for $n=2$ and only 0.13\% for $n=3$ as depicted in figure \ref{distribution}.
 \begin{figure}
 \label{distribution}
 \begin{center}
 \includegraphics[width=9cm]{distribution}
-\caption{Normal distribution and probability of having pixels with intensity above certain thresholds.}
+\caption{Normal distribution and probability of having pixels with intensity above certain thresholds.
+The cut-off parameter governs how much signal is integrally kept, thus the achievable compression rate on the one hand and the limit of quality of data on the other. It is the user's responsibility to set wisely this threshold.}
 \end{center}
 \end{figure}
 
-The storage space is much larger than just the pixel intensity since one needs to store as well its position in detector coordinates. 
+The compressed data-format consists in:
+\begin{itemize}
+    \item Pixel intensities and positions for pixels worth saving.
+    \item Average level of the background and associated uncertainties as function of the distance to the beam-center.
+    \item The distance to the center of every pixel.
+\end{itemize}
 Since diffraction analysis software are performing some kind of noise-level analysis, the background signal has to be regenerated with intensity and noise similar to the original data.
-Thus, the average intensity per azimuthal bin together with the associated uncertainties needs to be stored.
+
 
 \subsection{Sparsification}
 
@@ -468,10 +476,10 @@ Maybe an important consideration is whether, regardless from the file format, it
 In fact, some crystallographic reduction program like CrysAlisPro \cite{crysalis} provide a better result with noise-less background while XDS \cite{xds}, which performs a deep noise analysis, needs to have the noisy background properly restored.
 Shaded regions are never reconstructed properly and should be masked adequately in the reduction software.
 
-Future development will focus on a HDF5-plugins able to provide access to densified images from their sparse representation. 
-This will allow any analysis software able to read HDF5 files to treat sparse data as if they were dense, removing the burden of densifying the images from the users.
+Future development will focus on a HDF5-plugins able to provide access to densified images from their sparse representation using user-defined function in HDF5 \cite{hdf5-udf}.
+This will allow any analysis software (already able to read HDF5 files) to treat sparse data as if they were dense, removing the burden of densifing the images from the users.
 
-\subsection{Performances}
+\subsection{Performances on a single crystal protein dataset}
 The performances for a lossy compression algorithm are to be evaluated along many directions: compression and decompression speeds, compression ratio and degradation of the recorded signal.
 In the following example we present the sparsification of a Lysozyme (HEWL) dataset obtained using a traditional oscillation data-collection. 
 Data were collected on an Eiger 4M detector \cite{lysozyme}, selected for its similarity in size and performances with the \textsc{Jungfrau} detector.
@@ -489,10 +497,17 @@ To evaluate the effective maximal compression ratio, the dataset was median-filt
 A background dataset of 1800 such images sparsifies into a 11MB HDF5 file which represents a compression ratio of 136x ! 
 Indeed, only 19 pixels were saved per frame and the compressed numerical values are mostly the same, which compresses great with bitshuffle-LZ4.
 
-In production conditions, one would like to tune this threshold to the minimal value which guarantees a compression ratio large enough to allow the storage of all data.
-For ESRF-ID29, where a \textsc{Jungfrau} 4M can operate close to 1 kHz, the pedestal+gain pre-processing convert 16-bits integers into 32-bits floating point values, doubling the bandwidth for data saving. 
-The detector outputs the data via $8\times$ 10Gbit/s network links and the storage is performed via a single 25 Gbit/s link, making a minimum compression ratio of 6.4x which is equivalent to a cutoff at $1.4\sigma$ (cf. figure \ref{distribution}).
 
+For ESRF-ID29, where the \textsc{Jungfrau} 4M can operate close to 1 kHz, the pedestal+gain pre-processing convert 16-bits integers into 32-bits floating point values, doubling the bandwidth for data saving.
+The detector outputs the data via $8\times$ 10Gbit/s network links and the storage is performed via a single 25 Gbit/s link, making a minimum compression ratio of 6.4x.
+
+In production conditions, ID29 users have to trade between:
+\begin{itemize}
+    \item Detector speed: operate at lower speed (~200Hz) to be able to save the pre-processed data.
+    \item Energy resolution: floating data compress badly, so they are better stored as integer, where the number of ADU per photon can be tuned. With 1 ADU per photon, one gets the best compression rates but one looses the sub-photon energy resolution of the \textsc{Jungfrau} detector.
+    \item  Use the burst mode: acquire only shorter datasets and make breaks to let the data be saved from the detector computer to the central storage.
+    \item Discard pixel of lower intensity: this is a new possibility offered by this algorithm. A cutoff at $1.4\sigma$ is already providing the 6.4x compression ratio needed according to (cf. figure \ref{distribution}).
+\end{itemize}
 
 \subsubsection{Compression speed:}
 %\begin{verbatim}
@@ -528,10 +543,11 @@ The detector outputs the data via $8\times$ 10Gbit/s network links and the stora
 %\end{verbatim}
 
 The compression speed has been measured on the computer designed for online data-reduction of the \textsc{Jungfrau} detector \cite{sri2021}: 
-an IBM AC922 using two Power9 processors and two (with possibility to upgrade to four) Nvidia Tesla V100 GPU. 
+an IBM AC922 using two Power9 processors and two Nvidia Tesla V100 GPU. 
 %add core counts for the single processor GS
-The sequential execution of the code on the GPU takes about 4 ms to process one image and uses one single CPU-core and a quarter of a GPU. 
-In online condition, multiple parallel processes are expected to achieve much higher frame-rate, since the nominal speed for the \textsc{Jungfrau} is 1kHz.
+The sequential execution of the code on the GPU takes about 4 ms to process one image and uses one single CPU-core and a GPU. 
+In production conditions, two such computers are diving each two GPUs, allowing to use the detector  at its nominal speed close to 1kHz.
+The main bottleneck remains the networked saving of the different files: raw files, sparse files, peak positions, accumulated frames, ... not all can be saved at all time when operating at full speed.
 
 \subsubsection{Decompression speed:} 
 The decompression of those data should typically be performed on a standard workstation (here running two Intel Xeon Gold 6134 CPU @ 3.20GHz): the reconstruction speed is found to take 30 s for the full dataset, while writing of the densified dataset (with bitshuffle-LZ4 compression) takes 45s. 
@@ -566,19 +582,33 @@ Those results are very different from the one described in \citeasnoun{veto_2024
 The main difference between the two approaches is that here, no peak identification is performed, thus no minimum number of contiguous and intense pixels are to be found. 
 So more pixels values get saved, trading disk space for quality of the recorded dataset.
 
-\section{Application to serial crystallography}
+\subsection{Performances on a single crystal protein dataset}
+
+\subsection{Influence of the cut-off on the quality of serial-crystallography data}
+
+
+\subsection{Conclusion on sparsification}
+The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
+This excludes notably diffuse scattering experiment but it is generally applicable to most single crystal diffraction experiments, ranging from small molecules to macro-molecules like proteins and even serial crystallography.
+With the addition compression offered, sparsification is especially interesting for serial crystallography with datasets of millions of frames collected per experiment.
+As any lossy compression, the user has still the responsibility of choosing the level under which all data will be lost, which will limit later-on the quality of the results one may extract from those data.  \cite{cc1/2}.
+
+In comparison with ROIBIN-SZ \cite{roibin}, which preserves pixels in the neighborhood of identified peaks and stores the background heavily binned, the sparsification presented here does not require a complete peak-search thus it is simpler, with fewer parameters to be tuned, and is able to save any pixel which is intense enough.
+Nevertheless, peak-finding is of crucial important for identifying Bragg-peaks, one of the first stage of any data reduction pipeline.
+
+\section{Application to peak-finding}
 A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, only keeping the frames which deserve processing. 
 This is the role of the "veto-algorithms".
 
-The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be Bragg peaks. 
-For this,  several additional checks are performed on the local neighbourhood which is a small square patch (typically 3x3 or 5x5 pixels):
+The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be Bragg peaks, like peakfinder8 \cite{Cheetah2014} does. 
+For this, several additional checks are performed on the local neighbourhood which is a small square patch (typically 3x3 or 5x5 pixels):
 \begin{itemize}
 \item The considered pixel is the maximum of the local neighborhood.
-\item Enough of pixels in the local neighborhood satisfying the SNR condition: typically 2 to 5 pixels out of 9 or 25 are intense enough.
+\item Enough of pixels in the local neighborhood satisfying the SNR condition: typically 2 to 5 pixels out of $3\times 3$ or $5\times 5$ are intense enough (parameters set manually).
 \end{itemize}
 
-For each peak, the pixel coordinate, the precise centroïd, the sum of data and its propagated deviation are recorded and reported. 
-Those peak-position are saved into a HDF5 file (represented figure \ref{silx}) following the CXI format \cite{cxi} which can be can be read from CrystFEL \cite{CrystFEL}.
+For each peak, the coordinates of the centroïd, the sum of data and its propagated deviation are recorded and reported. 
+Those peak-position are saved into a HDF5 file (represented figure \ref{silx}) following the CXI format \cite{cxi} which can be read from CrystFEL \cite{CrystFEL}.
 CrystFEL is the most popular software to process serial crystallography data, allowing to swap peak-picking algorithms \cite{zaefferer, Cheetah2014, robustpeakfinder} and indexing tools \cite{xds, mosflm, taketwo, xgandalf, pinkindexer}.
 Since indexing is compute intensive, CrystFEL can distributes calculation over several cores or nodes.
 
@@ -627,7 +657,7 @@ On the opposite, pyFAI knows about this curvature and measures the variance alon
 Points picked by Onda at larger q-values do not look like Bragg-peaks but this could be a side-effect of the parameter tuning to get the same number of peaks for both algorithms.
 
 The same figure presents with dashed lines the number of peaks which are coincident (within 2 pixels) with expected reflections (after indexing using Xgandalf).
-It demonstrates that the additional peaks found by pyFAI in the inner-shell ($d>3\AA$) are consistent with Bragg-peaks, thus valuable for indexing, while the additional peaks found by Onda in the outer shell ($d<2\AA$) are not Bragg-peaks, and thus are detrimental.
+It demonstrates that the additional peaks found by pyFAI in the inner-shell ($d>3$\AA{}) are consistent with Bragg-peaks, thus valuable for indexing, while the additional peaks found by Onda in the outer shell ($d<2$\AA) are not Bragg-peaks, and thus are detrimental.
 
 A word on performances: the Python binding in Onda to the peakfinder8 algorithm from Cheetah runs in 180ms on a high-end server CPU (AMD Epyc 7262) and 300ms on a workstation (Intel Xeon E5-1650 v4). 
 The version available in pyFAI was designed in OpenCL \cite{opencl_khronos, opencl, pyopencl} and runs best on GPUs: 30ms on a AMD Vega 56 and in 10 ms on a Nvidia RTX A5000. 
@@ -727,6 +757,10 @@ On Eiger detector data, where the detector is defined as a single rigid module, 
 Work is ongoing to convert the geometry description from pyFAI, where every pixel is independent, to the geometry used in CrystFEL, and vice-versa.
 Until then, frames are indexed on peak position freshly re-extracted by CrystFEL using its own peak-finding algorithms. 
 
+TODO: Comparison with Eiger detector ...
+
+Disclaimer about the sparsification algorithm
+
 \section{Conclusion}
 
 Background analysis of single crystal diffraction images can be implemented efficiently using iterative azimuthal integration and allows the separation of the signal originating from Bragg-peaks from amorphous background.
@@ -738,6 +772,7 @@ The second application is a peak-finder for synchrotron serial crystallography w
 The quality of the picking has been evaluated by comparing the indexation rate with reference peak-finder algorithms.
 The number of peaks found is used as veto algorithm to discard frames without diffraction signal and save storage space.
 
+Revenir sur toro...
      %-------------------------------------------------------------------------
      % The back matter of the paper - acknowledgements and references
      %-------------------------------------------------------------------------
