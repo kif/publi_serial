@@ -43,15 +43,22 @@ ax[1].plot(q[:15], Rsplit_s14[:15], label="Sparse 1.4$\\sigma$")
 #ax[1].legend()
 ax[1].set_ylabel(r"Rsplit (%)")
 #ax[1].set_xlabel(r"d-spacing ($\AA$)")
-ax[1].set_ylim(0,100)
 ax[1].set_xticks(q[m], ["" for i in d[m]])
 
 lim10=root_scalar(lambda x:interp1d(q, snr_dense)(x)-1.0, x0=1.92, x1=3.3).root
 lim14=root_scalar(lambda x:interp1d(q, snr_dense)(x)-1.4, x0=1.92, x1=3.3).root
 
+ax[0].set_ylim(0,8)
+ax[1].set_ylim(0,100)
+ax[2].set_ylim(0,1)
+
 ax[0].vlines((lim10,lim14), 0, 8, colors=("orange", "green"), label=("1$\sigma$","1.4$\sigma$"))
 ax[1].vlines((lim10,lim14), 0, 100, colors=("orange", "green"))
 ax[2].vlines((lim10,lim14), 0, 1, colors=("orange", "green"))
+
+ax[0].set_title("(a)")
+ax[1].set_title("(b)")
+ax[2].set_title("(c)")
 
 fig.savefig("NQO1.png")
 fig.savefig("NQO1.eps")
