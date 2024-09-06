@@ -584,26 +584,26 @@ So more pixels values get saved, trading disk space for quality of the recorded 
 
 \subsection{Influence of the sparsification on the quality of serial-crystallography data acquired with Eiger detector}
 \label{nicolas} %Example from Nicolas.
-The influence of the sparsification and especially of the cut-off parameter has been evaluated along two axis, first of all, the monitoring the degradation of quality indicators and then, by checking the ability to phase a dataset from anomalous signal.
+%The influence of the sparsification and especially of the cut-off parameter has been evaluated along two axis, first of all, the monitoring the degradation of quality indicators and then, by checking the ability to phase a dataset from anomalous signal.
 
-Tiny crystals of egg white lysozyme (HEWL) + Gadolinium were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30A3 beamline at the ESRF (Massif3) with an Eiger 4M detector.
-This dataset consists of 11637 frames out of which 11512 were indexed.
+In this section, the dataset consists of 11637 frames of Eiger 4M images, out of which 11512 were properly indexed. 
+Those data were collected on the ID30A3 beamline at the ESRF (Massif3) from tiny crystals of egg white lysozyme (HEWL) + Gadolinium, deposited on a SiN membrane and this membrane was scanned in front of the beam.
 
 \subsubsection{Quality indicator degradation:}
-The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset and compared with the same dataset sparsified at 0.8, 1.0, 1.4 and $2.0\sigma$ in the figure \ref{}
+The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset and compared with the same dataset sparsified at 0.8, 1.0, 1.4 and $2.0\sigma$ and subsequently re-densified (figure \ref{Rfree}). 
 
 \begin{figure}
 \label{Rfree}
 \begin{center}
-\includegraphics[width=9cm]{figure_rfree}
-\caption{Rfree/Rwork crystallographic quality indicators at different resolution shells obtained from the complete dataset (11k frames) of HEWL+Ga. The quality of the sparsified data (at $0.8\sigma$ and $2.0\sigma$) are compared with the initial dataset.}
+\includegraphics[width=9cm]{fig_Rfree}
+\caption{Rfree/Rwork crystallographic quality indicators obtained from the complete dataset (11k frames) of HEWL+Ga, either from the initial dataset or after sparsification and re-densification.}
 \end{center}
 \end{figure}
+As expected, the crystallographic quality indicator show a gradual degradation with increasingly sparse data but Rfree shows little degradation with little sparsification ($0.8\sigma$ equivalent to 21\% of the pixels saved).
 
-
-\subsubsection{Quality indicator degradation as function of the resolution shell:}
-The Rfree/Rwork quality indicators \cite{Rfree} were calculated for the initial dataset for different resolution shells. 
-Those indicatores are compared in the figure \ref{nicolas_R} with the one obtained from the same dataset sparsified at $0.8\sigma$ and $2.0\sigma$ and subsequently re-densified.
+\subsubsection{Quality indicators as function of the resolution shell:}
+The same Rfree/Rwork quality indicators were calculated for the initial dataset for different resolution shells to ensure the degradation is not only limited in the outer-shell. 
+Those indicators are compared in the figure \ref{nicolas_R} with the one obtained from the same dataset sparsified at $0.8\sigma$ and $2.0\sigma$ and subsequently re-densified.
 
 \begin{figure}
 \label{nicolas_R}
@@ -613,8 +613,13 @@ Those indicatores are compared in the figure \ref{nicolas_R} with the one obtain
 \end{center}
 \end{figure}
 
-Both Rfree and Rwork exhibit degradation of the 
+Both Rfree and Rwork exhibit degradation but not necessary worse within the outer-shells. 
+The degradation of Rfree at moderate sparsification ($0.8 \sigma$) is once again very limited.
 
+\subsubsection{Ability to phase sparse data and quality of the density map:}
+One of the main concern with sparsification is that it may degrade the weak anomalous signal which is precious for phasing.
+The HEWL+Ga dataset was truncated at different length (from 3000 to 7000 out of the 11512 frames) in order to "artificially" decrease the anomalous signal strength in the dataset.
+The figure \ref{nicolas_A} shows the number of residues which were properly placed in the electron density map with an automatic procedure.
 \begin{figure}
 \label{nicolas_A}
 \begin{center}
@@ -623,20 +628,15 @@ Both Rfree and Rwork exhibit degradation of the
 \end{center}
 \end{figure}
 
-[...]
-I looked at the possibility or not to phase, and the difference in R/Rfree between original and sparsified (then reconstructed) data.
+The sparsified dataset does not show less residues properly placed after the procedure, it even looks marginally better than the initial dataset, especially for larger compression factor where the dataset could be phased with as little as 3500 frames. 
 
-Regarding the comment on weakly diffracting crystals of the reviewers, one way to "artificially" decrease the anomalous signal strength is to lower the number of indexed patterns in a dataset.
-The original dataset contains ~11k indexed patterns. We could phase with as low as 3.5k indexed patterns (both original and sparsified).
-This seems to be a strong benefit of the algorithm compared to the ROBIN-SZ compression algorithm mentioned by both reviewers.  
-Please see the attached document, which briefly present a part of the analysis I did. 
+%We could phase with as low as 3.5k indexed patterns (both original and sparsified).
+%This seems to be a strong benefit of the algorithm compared to the ROBIN-SZ compression algorithm mentioned by both reviewers.  
+%If we really want to perform the analysis with anomalous signal from ID29 data, we could use the HEWL+TbXo4 from https://www.biorxiv.org/content/10.1101/2024.05.13.593864v1.full ?
+%I should still have some scripts to run the analysis (would need some digging). 
 
-If we really want to perform the analysis with anomalous signal from ID29 data, we could use the HEWL+TbXo4 from https://www.biorxiv.org/content/10.1101/2024.05.13.593864v1.full ?
-I should still have some scripts to run the analysis (would need some digging). 
-
-
-\subsection{Performances on a serial crystallography dataset}
-Small crystals of NQO1 sample \cite{NQO1}, complexed with NADH, were collected at ESRF-ID29 using a fixed-target sample environment. 
+\subsection{Influence of the sparsification on the quality of serial-crystallography data acquired with Jungfrau detector}
+Small crystals of NQO1 sample \cite{NQO1}, complexed with NADH, were collected at ESRF-ID29 using a fixed-target sample environment and the jungfrau 4M detector. 
 The complete dataset represents 574k frames (5 TB) out of which 25809 frames were selected with nice peaks (4.5\% of the total).
 The indexation rate for dense data, and two sparse dataset (cut-off at 1.0$\sigma$ and 1.4$\sigma$) are reported in table \ref{NQO1}. 
 
@@ -666,17 +666,19 @@ TODO: place here the analysis of the electron density
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
-This excludes notably diffuse scattering experiment but it is generally applicable to most single crystal diffraction experiments, ranging from small molecules to macro-molecules like proteins and even serial crystallography.
-With the addition compression offered, sparsification is especially interesting for serial crystallography with datasets of millions of frames collected per experiment.
-As any lossy compression, the user has still the responsibility of choosing the level under which all data will be lost, which will limit later-on the quality of the results one may extract from those data. 
+This excludes notably diffuse scattering experiment but it is generally applicable to small molecules crystallography and macro-molecular crystallography and even serial crystallography.
+With the addition compression offered, sparsification is especially interesting for serial crystallography where datasets of millions of frames are collected per experiment.
+As any lossy compression, the user has still the responsibility of choosing wisely the threshold level under which ALL DATA WILL BE LOST and which will limit later-on the quality of the results one may extract from those data. 
 This is of crucial importance for macromolecular crystallography where valuable information is still present in reflection with SNR less than one \cite{cc1/2}.
+We have demonstrated that a sparsification at $0.8\sigma$, equivalent to saving only 21\% of all data
+or a $2\times$ compression, preserves nicely the electron density map and is hardly distinguishable from the uncompressed data.
 
-In comparison with ROIBIN-SZ \cite{roibin}, which preserves pixels in the neighborhood of identified peaks and stores the background heavily binned, the sparsification presented here does not require a complete peak-search thus it is simpler, with fewer parameters to be tuned, and is able to save any pixel which is intense enough.
+In comparison with ROIBIN-SZ \cite{roibin}, which preserves all pixels in the neighborhood of identified peaks and stores the background heavily binned, the sparsification presented here does not require a complete peak-search thus it is simpler, with fewer parameters to be tuned, and is able to save any pixel which is intense enough.
 Nevertheless, peak-finding is of crucial important for identifying Bragg-peaks, one of the first stage of any data reduction pipeline.
 
-\section{Application to peak-finding for serial crystallography}
+\section{Application of peak-finding for serial crystallography}
 A classical way of pre-processing serial-crystallography data is to shrink the amount of data by sieving-out empty or bad frames, only keeping the frames which deserve processing. 
-This is the role of the "veto-algorithms".
+This is the role of the "veto-algorithm".
 
 The sigma clipping algorithm provides us with the background (average and deviation) and is used to pick pixels which are likely to be Bragg peaks, like peakfinder8 \cite{Cheetah2014} does. 
 For this, several additional checks are performed on the local neighbourhood which is a small square patch (typically 3x3 or 5x5 pixels):
@@ -699,7 +701,7 @@ The left-hand side contains the HDF5 tree structure while the right-hand side pr
 
 %not sure if the jump between previous and current sentence is too sudden GS
 The serial crystallography beamline at the ESRF (ID29) uses a LImA2 monitor \cite{lima2} as visualization tool.
-It is inspired from  NanoPeakCell \cite{nanopeakcell} for online visualization and feeds back information to check if peaks found correspond actually the crystal lattice expected for the sample.
+It is inspired from  NanoPeakCell \cite{nanopeakcell} for online visualization and feeds back information to check if peaks found correspond actually to the crystal lattice expected for the sample.
 We will first compare the peak-picking algorithm with some reference implementation on a single frame before evaluating the quality of the picked points on a serial-crystallography dataset where the indexation rate will be used as quality indicator.
 
 \subsection{Comparison of picked peaks}
@@ -727,7 +729,7 @@ The width of each radial-shell is two inverse nanometer in $q-$space.
 The dashed lines represents the number of those peaks which have successfully been indexed, i.e. located at less than two pixels away from an expected reflection (calculated by Xgandalf). }
 \end{figure}
 
-The figure \ref{peak_per_ring} presents the histogram of modulus of the scattering vector of the peaks found with different methods, i.e. the number of peaks having a given q-value.
+The figure \ref{peak_per_ring} presents the histogram of $q$-values (modulus of the scattering vector) of the peaks found with different methods, i.e. the number of peaks having a given q-value.
 For readability, those histograms (bin width: $2 nm^{-1}$) have been represented as plots with the horizontal axis labeled in d-spacing ($q=2\pi/d$).  
 The analysis of those histograms confirms that the implementation in pyFAI is getting more points closer to the beam-center while the reference implementation is picking more point at larger q-values.
 This is likely due to the curvature of the Debye-Scherrer ring: the original version of peakfinder8 evaluates the variance in a neighborhood defined by some radius around the point of interest and the variance is higher close to the beam-center due to the important curvature of those rings.
@@ -743,12 +745,13 @@ Interestingly, an entry level GPU (Nvidia GT1030), which is seven times cheaper 
 
 \subsection{Quality of the peakfinder on serial crystallography data}
 \label{quality-pf}
-The quality of peaks extracted with this algorithm is finally evaluated on a serial-crystallography dataset: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was scanned in front of the beam at the ID30A3 beamline at the ESRF with an Eiger 4M detector.
-A fraction of 1000 frames of the dataset %\cite{ssx-Lyso} 
-used in section \ref{nicolas} 
+The quality of peaks extracted with this algorithm is evaluated on a serial-crystal\-lography dataset. 
+A subset of 1000 frames of the dataset used in section \ref{nicolas}
+%: tiny crystals of egg white lysozyme (HEWL) were deposited on a SiN membrane and this membrane was #scanned in front of the beam at the ID30A3 beamline at the ESRF with an Eiger 4M detector.
+%A fraction  
 was used as a probe and was indexed with the $indexamajig$ tool from CrystFEL. 
 Since all frames show Bragg-peaks (figure \ref{silx}) the number of indexed frames can be seen as a quality indicator of the peak-picking algorithm used, when all other parameter remain unchanged.
-The indexation was performed with the \textsc{xgandalf} algorithm \cite{xgandalf} with default settings from CrystFEL 0.10.1 and was provided with the cell parameter: tetragonal $a=b=78.77\text{\AA}; c=39.04\text{\AA}; \alpha=\beta=\gamma = 90^o$.
+The indexation was performed with the \textit{xgandalf} algorithm \cite{xgandalf} with default settings from CrystFEL 0.10.1 and was provided with the cell parameter: tetragonal $a=b=78.77\text{\AA}; c=39.04\text{\AA}; \alpha=\beta=\gamma = 90^o$.
 The table \ref{crystfel} compares the number of frames properly indexed with the different picking algorithms available in CrystFEL and with the algorithm presented here. 
 
 \begin{table}
@@ -826,32 +829,34 @@ The $veto$ algorithm having proved its robustness, it is now activated for (most
 
 \subsection{Limitations}
 There is a strong sensitivity of the indexation rate with data from the \textsc{Jungfrau} detector, related to the description of the detector in CrystFEL.
-The \textsc{Jungfrau} 4M detector is built from 8 modules manually assembled and exhibits some residual  misalignment, on the order of a couple of pixels.
+The \textsc{Jungfrau} 4M detector is built from 8 modules manually assembled and exhibits some residual misalignment, on the order of a couple of pixels.
 This misalignment is much larger than what has been measured on Eiger detectors from Dectris, where misalignment is less than one pixel in size (75 µm).
 On Eiger detector data, where the detector is defined as a single rigid module, the indexation rate is fairly independent of the peak-picking algorithm as described in \ref{quality-pf}.
+This means the peak positions provided by the veto-algorithm are suitable for indexing and this save the reading of the complete frame if it cannot be indexed.
 % Since the geometry of the detector used for the azimuthal integration is based on pyFAI, where every pixel is independent, it differs from the geometry used by the indexing software in CrystFEL where pixels are assembled in rigid modules.
 % on the peak-position obtained either from pyFAI or from the integrated peakfinder8 code with 
 % could explain the lower indexation rate of peaks position obtained with \textsc{Jungfrau} data in comparison with the Eiger data described in \ref{quality-pf}.
 %), which could be linked to the detector geometric distortion and/or the pink beam. 
-Work is ongoing to convert the geometry description from pyFAI, where every pixel is independent, to the geometry used in CrystFEL, and vice-versa.
-Until then, frames are indexed on peak position freshly re-extracted by CrystFEL using its own peak-finding algorithms. 
+With data from the Jungfrau detector, peak positions are systematically off and the indexing rate are much lower than with the peak-finder integrated into CrystFEL.
+Work is ongoing to convert the geometry description from pyFAI, where every pixel is independent, to the geometry used in CrystFEL, and vice-versa. 
+Once 
+Until then, the safest is to re-extract peak positions for indexing using one of CrystFEL's provided peak-finding algorithms. 
 
 TODO: Comparison with Eiger detector ...
 
-Disclaimer about the sparsification algorithm
-
 \section{Conclusion}
 
-Background analysis of single crystal diffraction images can be implemented efficiently using iterative azimuthal integration and allows the separation of the signal originating from Bragg-peaks from amorphous background.
+Background analysis of single crystal diffraction images can be implemented efficiently using iterative azimuthal integration and allows the separation of the signal originating from Bragg-peaks from isotropic background.
 
-A first application presented is lossy compression of diffraction frames where the average background is saved on the one side and the position and the intensity of pixels belonging to peaks on the the other.
-The quality of the compression has been demonstrated on rotational macro-molecular crystallography where the degradation of the signal has been monitored after a cycle of compression-decompression and the analysis of those dataset with standard reduction tools (XDS).
+A first application presented is a lossy compression of diffraction frames, called sparsification, where the average background is saved on the one side and the position and the intensity of most intense pixels (probably belonging to peaks) on the the other.
+The quality of the compression has been demonstrated on macro-molecular rotational and serial crystallography data. 
+The degradation of the signal has been monitored after a cycle of compression-decompression, both in reciprocal space using Rfree/Rwork crystallographic indicators and after Fourier transform in direct space where the number of residues placed phasing was checked and the degradatoi  . .
 
-The second application is a peak-finder for synchrotron serial crystallography which locates peak positions in real time and can be used to discard frames. 
+The second application is a peak-finder for serial crystallography which locates peak positions in real time and can be used as veto algorithm to discard empty frames. 
 The quality of the picking has been evaluated by comparing the indexation rate with reference peak-finder algorithms.
-The number of peaks found is used as veto algorithm to discard frames without diffraction signal and save storage space.
 
-Revenir sur toro...
+One of the strength of this peak-finer algorithm is that it is optimized to work on GPU and thus ideally suited to be coupled with the next generation of crystal indexer \cite{toro} which is running on the same kind of hardware, allowing to save the memory-transfer time and maybe achieve real-time integration of serial crystallography data.
+
      %-------------------------------------------------------------------------
      % The back matter of the paper - acknowledgements and references
      %-------------------------------------------------------------------------
