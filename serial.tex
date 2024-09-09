@@ -675,7 +675,17 @@ orange ($1.0\sigma$).
 On the right of those lines, there is supposed to be no more signal, while on the left, there is supposed to be no degradation of the signal in an ideal case.
 The evolution of Rsplit and CC$_{1/2}$, plotted in figure \ref{f-NQO1} b and c, show a degradation 
 of the quality which is much earlier, by half an Angstrom, in comparison with what would have been expected. 
-This highlights the need of careful management of the data both at the compression and at the decompression.
+%This highlights the need of careful management of the data both at the compression and at the decompression.
+
+Those data were finally refined in real-space using \textit{phenix.refine} ..
+\begin{figure}
+\label{r-NQO1}
+\includegraphics[width=12cm]{NQO1/NQO1}
+\caption{Comparison of crystallographic quality indicator as function of the resolution shell for sparsified data ($1.0\sigma$ in orange and $1.4\sigma$ in green) in comparison to the initial dense data, in blue:
+a: $<I>/\sigma$, b: R$_{free}$ and c: CC$_{1/2}$.
+The two vertical lines indicated where the dense data drop below the sparsification threshold, i.e. the limit at which all signal is lost in the sparsified datasets.  }
+\end{figure}
+
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
