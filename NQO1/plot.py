@@ -62,3 +62,6 @@ ax[2].set_title("(c)")
 
 fig.savefig("NQO1.png")
 fig.savefig("NQO1.eps")
+
+print(lim10, lim14)
+print(1/lim10, 1/lim14)
