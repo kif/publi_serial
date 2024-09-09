@@ -638,7 +638,7 @@ With Eiger detector data, a sparsification at $0.8\sigma$ offers a nice $2\times
 \subsection{Influence of the sparsification on the quality of serial-crystallography data acquired with \textsc{Jungfrau} detector}
 Small crystals of NQO1 sample \cite{NQO1}, complexed with NADH, were collected at ESRF-ID29 using a fixed-target sample environment and the \textsc{Jungfrau} 4M detector (PDB: 8RFM). 
 The complete dataset represents 574k frames (5 TB) out of which 25809 frames were selected with nice peaks (4.5\% of the total).
-The indexation rate for dense data, and two sparse dataset (cut-off at 1.0$\sigma$ and 1.4$\sigma$) are reported in table \ref{t-NQO1} and the crystallographic quality indicators are reported in the figure \ref{f-NQO1}. 
+The indexation rate for dense data, and two sparse dataset (cut-off at 1.0$\sigma$ and 1.4$\sigma$) are reported in table \ref{t-NQO1} and the crystallographic quality indicators are reported in the figure \ref{f-NQO1} in reciprocal space and figure \ref{f-NQO1} in real space. 
 
 \begin{table}
 \label{t-NQO1}
@@ -663,9 +663,10 @@ Indexing was performed with the default parameters of \textit{xgandalf} \cite{xg
 \begin{figure}
 \label{f-NQO1}
 \includegraphics[width=12cm]{NQO1/NQO1}
-\caption{Comparison of crystallographic quality indicator as function of the resolution shell for sparsified data ($1.0\sigma$ in orange and $1.4\sigma$ in green) in comparison to the initial dense data, in blue:
+\caption{Comparison of crystallographic quality indicator as function of the resolution shell for sparsified data ($1.0\sigma$ in orange and $1.4\sigma$ in green) in comparison to the initial dense data (in blue):
 a: $<I>/\sigma$, b: R$_{free}$ and c: CC$_{1/2}$.
-The two vertical lines indicated where the dense data drop below the sparsification threshold, i.e. the limit at which all signal is lost in the sparsified datasets.  }
+The two vertical lines indicates the resolution shell at which the signal/noise ratio drops below the sparsification threshold, i.e. the limit at which all signal is expected to be lost.}
+
 \end{figure}
 
 From the $<I>/\sigma$ curve, figure \ref{f-NQO1}a, one can see there is a systematically lower SNR from sparsified data in comparison with the initial dataset, regardless to the resolution shell. 
@@ -677,15 +678,24 @@ The evolution of Rsplit and CC$_{1/2}$, plotted in figure \ref{f-NQO1} b and c, 
 of the quality which is much earlier, by half an Angstrom, in comparison with what would have been expected. 
 %This highlights the need of careful management of the data both at the compression and at the decompression.
 
-Those data were finally refined in real-space using \textit{phenix.refine} ..
+Those data were finally refined in real-space using \textit{phenix.refine} \cite{phenix} until a resolution of 2.7$\AA$, which is noticeably better than what can be expected from the sparse data (limited to 3.0 and 3.1 $\AA$ for $1.0\sigma$ and $1.4\sigma$, respectively). 
+The results are summarized in figure \ref{r-NQO1}.
+
 \begin{figure}
 \label{r-NQO1}
-\includegraphics[width=12cm]{NQO1/NQO1}
-\caption{Comparison of crystallographic quality indicator as function of the resolution shell for sparsified data ($1.0\sigma$ in orange and $1.4\sigma$ in green) in comparison to the initial dense data, in blue:
-a: $<I>/\sigma$, b: R$_{free}$ and c: CC$_{1/2}$.
-The two vertical lines indicated where the dense data drop below the sparsification threshold, i.e. the limit at which all signal is lost in the sparsified datasets.  }
+\includegraphics[width=12cm]{NQO1/NQO1_refine}
+\caption{Comparison of crystallographic quality indicator in real space after refinement using \textit{phenix.refine} as function of the resolution shell for sparsified data ($1.0\sigma$ in orange and $1.4\sigma$ in green) in comparison to the initial dense data (in blue):
+a: Completeness of the dataset, b: R$_{work}$ (dotted) and R$_{free}$ (dashed) and c: CC$_{1/2 work}$ (dotted) and CC$_{1/2 free}$.
+The two vertical lines indicates the resolution shell at which the signal/noise ratio drops below the sparsification threshold, i.e. the limit at which all signal is expected to be lost.}
 \end{figure}
 
+The figure \ref{r-NQO1}a contains the completeness of the dataset as function of the resolution shell. 
+It confirms the sparsification algorithm works as expected, and that the signal starts to degrade where the SNR drops bellow the picking threshold. 
+The figure \ref{r-NQO1}b superimposes the R$_{work}$ in dotted lines (full dataset) in comparison with the R$_{free}$ where the fit is performed on 95\% of the dataset and the quality assessment is performed on the remaining 5\% (dashed line).
+Thus R$_{work}$ is always expected to be better than R$_{free}$.
+While the R$_{work}$ for the initial dataset looks much better than the sparsified version, the degradation is very limited for the R$_{work}$, especially between the initial and the sparsified dataset at $1\sigma$.
+The same is observed for the CC$_{1/2}$ in figure \ref{r-NQO1}c: the initial dataset shows a clear degradation between the \textit{work} and the \textit{free} version, but this degradation is less important for the sparsified version.
+The CC$_{free}$ indicators hardly degrades between the initial dataset and the two sparsified ones, confirming the ability to solve the protein structure from sparse data.
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
@@ -852,8 +862,8 @@ The $veto$ algorithm having proved its robustness, it is now activated for most 
 
 
 \subsection{Limitations}
-There is a strong sensitivity of the indexation rate with data from the \textsc{Jungfrau} detector, related to the description of the detector in CrystFEL.
-The \textsc{Jungfrau} 4M detector is built from 8 modules manually assembled and exhibits some residual misalignment, on the order of a few pixels.
+There is a strong sensitivity of the indexation rate with data from the \textsc{Jungfrau} detector, related to the description of the detector in CrystFEL and in pyFAI.
+The \textsc{Jungfrau} 4M detector is built from 8 modules manually assembled and exhibits some residual misalignment, on the order of a few pixels and miss-behaving pixels.
 This misalignment is much larger than what is commonly encountered with Eiger detectors from Dectris, where misalignment is usually less than one pixel in size (75 µm).
 On Eiger detector data, where the detector is defined as a single rigid module, the indexation rate is fairly independent of the peak-picking algorithm as described in \ref{quality-pf}.
 This means the peak positions provided by the veto-algorithm are suitable for indexing and this saves the reading of the complete frame if it cannot be indexed.
@@ -861,9 +871,10 @@ This means the peak positions provided by the veto-algorithm are suitable for in
 % on the peak-position obtained either from pyFAI or from the integrated peakfinder8 code with 
 % could explain the lower indexation rate of peaks position obtained with \textsc{Jungfrau} data in comparison with the Eiger data described in \ref{quality-pf}.
 %), which could be linked to the detector geometric distortion and/or the pink beam. 
-With data from the \textsc{Jungfrau} detector, peak positions are systematically off and the indexing rate are much lower than with the various peak-finder algorithms integrated into CrystFEL.
+With data from the \textsc{Jungfrau} detector, the indexing rate was lower than with certain peak-finders algorithms integrated into CrystFEL. 
 Work is ongoing to convert the geometry description from pyFAI, where every pixel is independent, to the geometry used in CrystFEL, and vice-versa. 
-Until then, the safest is to re-extract peak positions for indexing using one of CrystFEL's provided peak-finding algorithms. 
+We found this difference of indexation was related the description of the mask and of pixel position in different software.
+Until this issue is addressed, the safest is to re-extract peak positions for indexing using one of CrystFEL's provided peak-finding algorithms. 
 
 \section{Conclusion}
 
@@ -871,14 +882,14 @@ Background analysis of single crystal diffraction images can be implemented effi
 
 A lossy compression algorithm for diffraction frames, called sparsification, has been built on top of this signal separation, with the average background saved on the one side and the position and the intensity of most intense pixels (probably belonging to peaks) on the the other.
 The quality of the compression has been demonstrated on macro-molecular rotational and serial crystallography data. 
-The degradation of the signal has been monitored after a cycle of compression-decompression, both in reciprocal space using crystallographic quality indicators and after Fourier transform in direct space where the number of residues placed automatically was checked.
-The degradation of the signal was also monitored and sparsification at $0.8\sigma$ offers a $2\times$
-compression with limited degradation.
+The degradation of the signal has been monitored after a compression-decompression cycle, both in reciprocal space using crystallographic quality indicators and after Fourier transform in direct space where the number of residues placed automatically was checked.
+The degradation of the signal was also monitored as function of the threshold and sparsification at $0.8\sigma-1\sigma$ (offering a $2\times-5\times$ compression) still enables to reconstruct the molecular structure of proteins, both with Eiger and \textsc{Jungfrau} detectors.
 
 The second application is a peak-finder for serial crystallography which locates peak positions in real time and can be used as veto algorithm to discard empty frames. 
-The quality of the picking has been evaluated by comparing the indexation rate with reference peak-finder algorithms.
+The quality of the picking has been evaluated by comparing the indexation rate with reference peak-finder algorithms. 
+This \textit{veto-}algorithm is now used in production at the ESRF serial crystallography beamline (ID29) to save storage space.
 
-One of the strength of this peak-finer algorithm is that it is optimized to work on GPU and thus ideally suited to be coupled with the next generation of crystal indexer \cite{toro} which is running on the same kind of hardware, allowing to save two memory-transfer perframe and maybe achieve real-time integration of serial crystallography data.
+One of the strength of this peak-finer algorithm is that it is optimized to work on GPU and thus ideally suited to be coupled with the next generation of crystal indexer \cite{toro} which is running on the same kind of hardware, allowing to save two memory-transfer per frame and maybe achieve real-time integration of serial crystallography data.
 
      %-------------------------------------------------------------------------
      % The back matter of the paper - acknowledgements and references
