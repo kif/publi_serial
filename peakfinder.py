@@ -161,7 +161,7 @@ kwargs_hy = kwargs_py.copy()
 kwargs_hy["error_model"] = "hybrid"
 reh = pf.peakfinder(**kwargs_hy)
 
-ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI-hybrid")
+#ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI-hybrid")
 ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
 ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
 #ax.plot(indexed[:,0], indexed[:,1], ",", color="white", label="Xgandalf")
