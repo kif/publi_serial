@@ -1,4 +1,4 @@
-%matplotlib widget
+#%matplotlib widget
 import numpy
 import pyFAI, pyFAI.test.utilstest
 import fabio
@@ -26,11 +26,11 @@ res_pois = ai.integrate1d(bg, 1000, error_model="poisson", method=("no","csr","c
 
 fig, ax = subplots(1,2, figsize=(10,5))
 ax[0].imshow(bg)
-ax[0].set_title("a. Poissonnian background image")
+ax[0].set_title("(a) Poissonnian background image")
 ax[1].plot(res_azim.radial,res_azim.std, "-", label="std azimuthal")
 ax[1].plot(res_pois.radial,res_pois.std, "-",label="std Poisson")
 ax[1].set_xlabel(res_pois.unit.label)
-ax[1].set_title("b. Standard deviation of pixel values")
+ax[1].set_title("(b) Standard deviation of pixel values")
 ax[1].set_ylabel("Counts")
 ax[1].legend()
 fig.savefig("fig_std.png")
