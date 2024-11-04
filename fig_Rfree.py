@@ -7,8 +7,8 @@ Rwork = [29.11,29.98,30.03,30.61, 31.23]
 Rfree = [34.41,34.58,35.15,35.70,36.94]
 
 fig,ax=subplots()
-ax.plot(Rwork, label="Rwork")
-ax.plot(Rfree, label="Rfree")
+ax.plot(Rwork, label="R$_{work}$")
+ax.plot(Rfree, label="R$_{free}$")
 ax.set_xticks(range(5), labels)
 ax.set_ylabel("R-factor (%)")
 ax.set_ylim(25, 40)
