@@ -590,16 +590,16 @@ Tiny crystals of egg white lysozyme (HEWL) + Gadolinium were deposited on a SiN 
 The dataset consists of 11637 frames of  images, out of which 11512 were properly indexed. 
 
 \subsubsection{Quality indicator degradation:}
-The R$_{free}$/R$_{work}$ quality indicators \cite{Rfree} were calculated for the initial dataset and compared with the same dataset sparsified at 0.8, 1.0, 1.4 and $2.0\sigma$ and subsequently re-densified (Fig. \ref{Rfree}). 
+The R$_{free}$/R$_{work}$ quality indicators \cite{Rfree} were calculated for the initial dataset and compared with the same dataset sparsified at 0.8, 1.0, 1.4 and $2.0\sigma$ and subsequently re-densified (figure \ref{Rfree}). 
 
 \begin{figure}
 \label{Rfree}
 \begin{center}
 \includegraphics[width=9cm]{fig_Rfree}
-\caption{Degradation of R$_{work}$ and R$_{free}$ crystallographic quality indicators on the integral dataset of HEWL+Ga (11k frames), when increasing the levels of sparsification.}
+\caption{Degradation of R$_{work}$ and R$_{free}$ crystallographic quality indicators on the integral dataset of HEWL+Ga (11k frames) and actual compression rates, when increasing the levels of sparsification.}
 \end{center}
 \end{figure}
-As expected, the crystallographic quality indicator show a gradual degradation with increasing sparsification but R$_{free}$ shows little degradation with little sparsification ($0.8\sigma$ equivalent to 21\% of the pixels saved).
+As expected, the crystallographic quality indicator show a gradual degradation with increasing sparsification but R$_{free}$ shows little degradation with little sparsification ($0.8\sigma$, compression ratio of $1.34\times$).
 
 \subsubsection{Quality indicators as function of the resolution shell:}
 The same R$_{work}$ and R$_{free}$ quality indicators are reported in figure \ref{nicolas_R} as function of the resolution shell in order to monitor if the degradation is uniform among shells or if it affects mostly the outer shells.
@@ -659,7 +659,7 @@ Indexation rate & 88.6\%& 78.2\% & 79.0\%\\
 \end{center}
 \end{table}
 
-\subsubsection{Reciprocal space refinement:}
+\subsubsection{Data statistics:}
 
 The processing was performed with \textit{CrystFEL} \cite{CrystFEL} (version 0.11) with the geometry of the detector optimized with the \textit{millipede} procedure \cite{millepede, millepede2}. 
 Indexing was performed with the default parameters of \textit{xgandalf} \cite{xgandalf} based on peak-position by \textit{peakfinder8} \cite{Cheetah2014}.
@@ -682,7 +682,7 @@ On the right of those lines, there is supposed to be no more signal, while on th
 The evolution of R$_{split}$ and CC$_{1/2}$, plotted in figure \ref{f-NQO1} b and c, show a degradation 
 of the quality which is much earlier, by half an Angstrom, in comparison with what would have been expected. 
 %This highlights the need of careful management of the data both at the compression and at the decompression.
-\subsubsection{Real-space refinement:}
+\subsubsection{Refinement statistics:}
 
 Those data were finally refined in real-space using \textit{phenix.refine} \cite{phenix} until a resolution of 2.7\AA, which is noticeably better than what can be expected from the sparse data (limited to 3.0\AA ~and 3.1\AA ~for $1.0\sigma$ and $1.4\sigma$, respectively). 
 The results are summarized in figure \ref{r-NQO1}.
@@ -705,13 +705,12 @@ The CC$_{1/2}^{free}$ indicators hardly degrades between the initial dataset and
 
 \subsection{Conclusion on sparsification}
 The sparsification algorithm presented here is generally applicable to any kind of single crystal diffraction experiment where the background is isotropic. 
-This excludes notably diffuse scattering experiment but it is generally applicable to small molecules crystallography and macro-molecular crystallography and even serial crystallography.
+This excludes notably diffuse scattering experiment but it is generally applicable to small molecules crystallography and macro-molecular crystallography and even serial crystallography, when the images are nicely centro-symmetric and shadows are properly masked out.
 With the addition compression offered, sparsification is especially interesting for serial crystallography where datasets of millions of frames are collected per experiment.
-As any lossy compression, the user has still the responsibility of choosing wisely the threshold level under which ALL DATA WILL BE LOST and which will limit later-on the quality of the results one may extract from those data. 
+As any lossy compression, the user has still the responsibility of choosing wisely the threshold level wisely as it will limit later-on the quality of the results one may extract from those data. 
 This is of crucial importance for macromolecular crystallography where valuable information is still present in reflection with SNR less than one \cite{cc1/2}.
-We have demonstrated that a sparsification at $0.8\sigma$, equivalent to saving only 21\% of all data
-or a $2\times$ compression, preserves nicely the electron density map and is hardly distinguishable from the uncompressed data.
-The sparsification at $1.0\sigma$, offering a $3\times$ compression, preserves enough signal to refine a protein in with very limited degradation of the R$_{free}$ and CC$_{1/2}^{free}$ quality indicators.
+We have demonstrated that a sparsification at $0.8\sigma$, which has an actual compression of $1.3 \times$, preserves nicely the electron density map and is hardly distinguishable from the uncompressed data.
+The sparsification at $1.0\sigma$, offering a $1.6\times$ compression, preserves enough signal to refine a protein in with very limited degradation of the R$_{free}$ and CC$_{1/2}^{free}$ quality indicators.
 
 In comparison with ROIBIN-SZ \cite{roibin}, which preserves all pixels in the neighborhood of identified peaks and stores the background heavily binned, the sparsification presented here does not require a complete peak-search thus, it is simpler, with fewer parameters to be tuned, and is able to save any pixel which is intense enough.
 Nevertheless, peak-finding is of crucial important for identifying Bragg-peaks, one of the first stage of any data reduction pipeline.
@@ -865,6 +864,8 @@ The sample dataset consists of 80000 frames of lysozyme micro-crystals indexed o
 Since the \textsc{Jungfrau} is an integrating detector, the detector has relatively more background noise than a photon counting detector: here, data were saved with 8 ADU/photon, making the compression rate of hit and non-hit frames similar.
 In this example, discarding frames with less than 20 peaks of would have allowed to save one third of the network bandwidth and disk space, loosing only 0.16\% of frames index-able. 
 The indexation rate of actually recorded frames also increased to 20\%.
+It is noticeable the hit-rate was especially high in this experiment with 84\% of frames showing diffraction peaks.
+One would not expect a user-experiment to have such high concentration of crystals and in normal conditions, the expected compression ratio should be higher.
 The $veto$ algorithm having proved its robustness, it is now activated for most experiments, thanks to graphical helper tools to asses the optimal threshold during the experiment and allowing to set those parameters on the fly for real-time processing.
 
 
@@ -890,10 +891,10 @@ Background analysis of single crystal diffraction images can be implemented effi
 A lossy compression algorithm for diffraction frames, called sparsification, has been built on top of this signal separation, with the average background saved on the one side and the position and the intensity of most intense pixels (probably belonging to peaks) on the the other.
 The quality of the compression has been demonstrated on macro-molecular rotational and serial crystallography data. 
 The degradation of the signal has been monitored after a compression-decompression cycle, both in reciprocal space using crystallographic quality indicators and after Fourier transform in direct space where the number of residues placed automatically was checked.
-The degradation of the signal was also monitored as function of the threshold and sparsification at $0.8\sigma-1.0\sigma$ (offering a $2\times-3\times$ compression) still enables to reconstruct the molecular structure of proteins, both with Eiger and \textsc{Jungfrau} detectors.
+The degradation of the signal was also monitored as function of the threshold and sparsification at $0.8\sigma-1.0\sigma$ (offering a $1.3\times-1.6\times$ compression) still enables to reconstruct the molecular structure of proteins, both with Eiger and \textsc{Jungfrau} detectors.
 
-The second application is a peak-finder for serial crystallography which locates peak positions in real time and can be used as veto algorithm to discard empty frames. 
-The quality of the picking has been evaluated by comparing the indexation rate with reference peak-finder algorithms. 
+The second application is a peak-finder for serial crystallography which locates peak positions in real time and can be used as veto algorithm to discard images without (enough) diffraction peaks. 
+The peaks picked have been evaluated against state of the art peak-finder algorithms like \textit{peakfiner8} and the results were comparable in quality while much faster thanks to the usage of GPU.  
 This \textit{veto-}algorithm is now used in production at the ESRF serial crystallography beamline (ID29) to save storage space.
 
 One of the strength of this peak-finer algorithm is that it is optimized to work on GPU and thus ideally suited to be coupled with the next generation of crystal indexer \cite{toro} which is running on the same kind of hardware, allowing to save two memory-transfer per frame and maybe achieve real-time integration of serial crystallography data.
