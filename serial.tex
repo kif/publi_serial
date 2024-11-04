@@ -503,7 +503,7 @@ The detector outputs the data via $8\times$ 10Gbit/s network links and the stora
 
 In production conditions, ID29 users have to trade between:
 \begin{itemize}
-    \item Detector speed: operate at lower speed (~200Hz) to be able to save the pre-processed data.
+    \item Detector speed: operate at lower speed (231 Hz) to be able to save the pre-processed data.
     \item Energy resolution: floating data compress badly, so they are better stored as integer, where the number of ADU per photon can be tuned. With 1 ADU per photon, one gets the best compression rates but one looses the sub-photon energy resolution of the \textsc{Jungfrau} detector.
     \item  Use the burst mode: acquire only shorter datasets and make pauses to let the data reach the disk in the central storage.
     \item Discard pixel of lower intensity: this is a new possibility offered by this algorithm. 
@@ -684,7 +684,7 @@ of the quality which is much earlier, by half an Angstrom, in comparison with wh
 %This highlights the need of careful management of the data both at the compression and at the decompression.
 \subsubsection{Real-space refinement:}
 
-Those data were finally refined in real-space using \textit{phenix.refine} \cite{phenix} until a resolution of 2.7\AA, which is noticeably better than what can be expected from the sparse data (limited to 3.0\AA and 3.1\AA for $1.0\sigma$ and $1.4\sigma$, respectively). 
+Those data were finally refined in real-space using \textit{phenix.refine} \cite{phenix} until a resolution of 2.7\AA, which is noticeably better than what can be expected from the sparse data (limited to 3.0\AA ~and 3.1\AA ~for $1.0\sigma$ and $1.4\sigma$, respectively). 
 The results are summarized in figure \ref{r-NQO1}.
 
 \begin{figure}
