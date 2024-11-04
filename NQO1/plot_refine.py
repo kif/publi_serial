@@ -58,7 +58,7 @@ ax[1].plot(q, res_dense["RFREE"], linestyle="dashed", color=colors[0], label="R$
 ax[1].plot(q, res_1_0si["RFREE"], linestyle="dashed", color=colors[1],label="R$_{free}$ 1.0$\\sigma$")
 ax[1].plot(q, res_1_4si["RFREE"], linestyle="dashed", color=colors[2], label="R$_{free}$ 1.4$\\sigma$")
 ax[1].legend(ncol=2)
-ax[1].set_ylabel("R Work/Free")
+ax[1].set_ylabel("R work/free")
 #ax[1].set_ylabel("CC½ Work/Free")
 #ax[0].set_xlabel(r"d-spacing ($\AA$)")
 ax[1].set_xticks(q[m], ["" for i in d[m]])
@@ -71,7 +71,7 @@ ax[2].plot(q, res_dense["CCFREE"], linestyle="dashed", color=colors[0],label="CC
 ax[2].plot(q, res_1_0si["CCFREE"], linestyle="dashed", color=colors[1],label="CC$_{free}$ 1.0$\\sigma$")
 ax[2].plot(q, res_1_4si["CCFREE"], linestyle="dashed", color=colors[2],label="CC$_{free}$ 1.4$\\sigma$")
 ax[2].legend(ncol=2)
-ax[2].set_ylabel(r"CC½ Work/Free")
+ax[2].set_ylabel(r"CC½ work/free")
 ax[2].set_xlabel(r"d-spacing ($\AA$)")
 ax[2].set_xticks(q[m], d[m])
 
