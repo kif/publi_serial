@@ -24,7 +24,7 @@ ax2.set_ylabel(r"Compression ratio ($\times$)")
 # added these three lines
 lns = lns1+lns2+lns3
 labs = [l.get_label() for l in lns]
-ax.legend(lns, labs, loc=0)
+ax.legend(lns, labs, loc="upper left")
 fig.savefig("fig_Rfree.eps")
 fig.savefig("fig_Rfree.png")
 fig.show()
