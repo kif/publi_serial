@@ -88,7 +88,7 @@ fixed = fimg.data.copy()
 fixed[msk] = 1
 polarization = ai.polarization(factor=polarization_factor)
 
-fig, ax = subplots(1,2, figsize=(15, 10))
+fig, ax = subplots(1,2, figsize=(20, 10))
 # fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
 mimg = ax[0].imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis", origin="upper")
