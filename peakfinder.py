@@ -9,12 +9,13 @@ from matplotlib.pyplot import subplots, colorbar
 import pyFAI, pyFAI.units
 from pyFAI.test.utilstest import UtilsTest
 import fabio
-from matplotlib.colors import LogNorm
+from matplotlib.colors import LogNorm, NoNorm
 import scipy.optimize
 from pyFAI.opencl.peak_finder import OCL_PeakFinder
 import gc
 import shutil
 from pyFAI.ext.bilinear import Bilinear
+from matplotlib.patches import Rectangle
 
 pyfai_color = "limegreen"
 onda_color = "orange"
@@ -87,10 +88,11 @@ fixed = fimg.data.copy()
 fixed[msk] = 1
 polarization = ai.polarization(factor=polarization_factor)
 
-fig, ax = subplots(figsize=(12, 8))
+fig, ax = subplots(1,2, figsize=(15, 10))
 # fig.tight_layout(pad=3.0)
 ln = LogNorm(1, fimg.data.max())
-mimg = ax.imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis")
+mimg = ax[0].imshow(fixed, norm=ln, interpolation="hanning", cmap="viridis", origin="upper")
+mimg1= ax[1].imshow(fixed, norm=NoNorm(10, 20), interpolation="None", cmap="viridis", origin="upper")
 
 int1d = ai.integrate1d(fimg.data, npt, unit=unit, method=method)
 m = list(ai.engines.keys())[0]
@@ -162,12 +164,21 @@ kwargs_hy["error_model"] = "hybrid"
 reh = pf.peakfinder(**kwargs_hy)
 
 #ax.plot(reh["pos1"], reh["pos0"], "1", color="red", label="pyFAI-hybrid")
-ax.plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
-ax.plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
+ax[0].plot(res["pos1"], res["pos0"], "1", color=pyfai_color, label="pyFAI")
+ax[0].plot(res1[0], res1[1], "2", color=onda_color, label="Onda")
 #ax.plot(indexed[:,0], indexed[:,1], ",", color="white", label="Xgandalf")
 
-
-ax.legend()
+ax[1].plot(res["pos1"], res["pos0"], "D", color=pyfai_color, label="pyFAI",markerfacecolor='none', markeredgecolor=pyfai_color)
+ax[1].plot(res1[0], res1[1], "s",color=onda_color, label="Onda", markerfacecolor='none', markeredgecolor=onda_color)
+ax[1].set_xlim(1400,2000)
+ax[1].set_ylim(1000,1500)
+ax[1].invert_yaxis()
+ax[0].legend(loc="upper left")
+ax[0].add_patch(Rectangle((1400,1000),600,500,
+                    edgecolor='red',
+                    facecolor='none',
+                    lw=2))
+ax[1].set_title("Zoomed red rectangle")
 fig.savefig("peakfinder.eps")
 fig.savefig("peakfinder.png")
 fig.show()
